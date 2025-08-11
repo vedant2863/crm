@@ -4,8 +4,8 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "ImageKit Next.js Integration",
-  description: "Demo of ImageKit integration with Next.js",
+  title: "CRM System",
+  description: "Modern CRM system for managing contacts, deals, and tasks",
 };
 
 export default function RootLayout({
@@ -14,9 +14,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" 
+    data-darkreader-mode="dynamic"
+    data-darkreader-scheme="dark"
+    data-darkreader-proxy-injected="true"
+    className="hydrated"
+>
       <body className={inter.className}>
-        <main className="container mx-auto px-4 py-8">{children}</main>
+          {children}
       </body>
     </html>
   );

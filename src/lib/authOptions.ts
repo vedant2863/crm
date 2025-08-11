@@ -7,8 +7,9 @@ import User from "@/models/user";
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string;
       role: string;
+      id: string;
+    } & {
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -68,7 +69,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role;
         token.id = user.id;
       }
       return token;

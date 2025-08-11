@@ -21,10 +21,10 @@ export default function Login() {
     });
 
     if (result?.error) {
-      alert(result.error);
+      console.error(result.error);
     } else {
-      alert("Login successful!");
-      router.push("/");
+      console.log("Login successful!");
+      router.push("/dashboard");
     }
   };
 

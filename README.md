@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
++--------------------------------------------------------------------------------+
+| Top Navigation: [Search Box]      [Notifications 🔔]      [User Profile 👤]   |
++-------------------+------------------------------------------------------------+
+| Sidebar Menu      | Main Content Area                                          |
+|-------------------|------------------------------------------------------------|
+| 📊 Dashboard      | Dynamic page (changes by route)                            |
+| 👥 Contacts       |                                                            |
+| 📂 Deals          |                                                            |
+| ✅ Tasks          |                                                            |
+| ⚙️ Settings       |                                                            |
++-------------------+------------------------------------------------------------+
 
-## Getting Started
+---
 
-First, run the development server:
++------------------------------------------------------+
+| KPI Card | KPI Card | KPI Card | KPI Card            |
+| (Deals)  | (Revenue)| (Leads)  | (Conversion Rate)   |
++------------------------------------------------------+
+| Chart: Deals by Stage (Bar or Doughnut)              |
++------------------------------------------------------+
+| Chart: Monthly Revenue (Line Chart)                  |
++------------------------------------------------------+
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[ Search Box ] [ Tag Filter Dropdown ] [ Add Contact Button ]
++----------------------------------------------------------------+
+| Name         | Email            | Phone     | Company          |
+|--------------|------------------|-----------|------------------|
+| John Doe     | john@acme.com     | 555-1234  | Acme Corp         |
+| Jane Smith   | jane@xyz.com      | 555-5678  | XYZ Ltd           |
++----------------------------------------------------------------+
+[ Pagination Controls ]
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[ Add Deal Button ]
++--------------+  +--------------+  +--------------+  +--------------+
+| New          |  | Contacted    |  | Negotiation  |  | Won / Lost   |
++--------------+  +--------------+  +--------------+  +--------------+
+| Deal Card 1  |  | Deal Card 4  |  | Deal Card 6  |  | Deal Card 8  |
+| Deal Card 2  |  | Deal Card 5  |  | Deal Card 7  |  | Deal Card 9  |
++--------------+  +--------------+  +--------------+  +--------------+
+(Drag-and-drop between columns)
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+[ Filter: Status Dropdown ] [ Filter: Assigned To Dropdown ] [ Add Task Button ]
++--------------------------------------------------------------+
+| Title         | Due Date   | Priority | Assigned To | Status |
+|---------------|------------|----------|-------------|--------|
+| Follow up     | 2025-08-15 | High     | John Doe    | Pending|
+| Send Proposal | 2025-08-20 | Medium   | Jane Smith  | Done   |
++--------------------------------------------------------------+
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
+[ Profile Form: Name, Email, Password Change ]
+[ Role Management (admin only): List users, assign roles ]
+[ Theme Toggle: Light/Dark Mode ]
+[ Save Changes Button ]
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📌 Features
 
-## Deploy on Vercel
+- ✅ **Authentication** – Email/password login, registration, and OAuth
+- ✅ **Responsive UI** – Sidebar + Navbar layout
+- ✅ **Protected Routes** – Only logged-in users can access dashboard
+- ✅ **MongoDB Integration** – Store and fetch CRM data
+- ✅ **shadcn/ui Components** – Clean, reusable UI elements
+- ✅ **Wireframed Layout** – Simple, intuitive design
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚀 Tech Stack
+
+- **Framework**: [Next.js 14+](https://nextjs.org/) (App Router)
+- **Styling**: [TailwindCSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **Auth**: [Auth.js (NextAuth)](https://authjs.dev/) – Email/password & OAuth providers
+- **Database**: [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
+- **Icons**: [Lucide Icons](https://lucide.dev/)
+- **State Management**: React Hooks
+- **Deployment**: [Vercel](https://vercel.com/)
+
+---
