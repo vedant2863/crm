@@ -32,17 +32,18 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
+      .lean()
       .select("-userId");
 
     const total = await Contact.countDocuments(query);
 
     return NextResponse.json({
-      contacts,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
+      "contacts": contacts,
+      "pagination": {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "pages": Math.ceil(total / limit),
       },
     });
   } catch (error) {
