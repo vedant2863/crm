@@ -1,9 +1,9 @@
-import { IContact } from "@/types";
+import { Contact } from "../type";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface ContactCardProps {
-  contact: IContact;
-  onEdit: (contact: IContact) => void;
+  contact: Contact;
+  onEdit: (contact: Contact) => void;
   onDelete: (id: string) => void;
 }
 

@@ -57,10 +57,17 @@ export default function TasksPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<{
+    title: string;
+    description: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    dueDate: string;
+    contactName: string;
+    dealTitle: string;
+  }>({
     title: "",
     description: "",
-    priority: "medium" as const,
+    priority: "medium",
     dueDate: "",
     contactName: "",
     dealTitle: ""
@@ -358,7 +365,7 @@ export default function TasksPage() {
                 />
                 <select
                   value={newTask.priority}
-                  onChange={(e) => setNewTask({...newTask, priority: e.target.value as any})}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent'})}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {PRIORITY_LEVELS.map(priority => (

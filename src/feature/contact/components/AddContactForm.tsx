@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,21 +9,42 @@ import { Contact } from "../type";
 interface AddContactFormProps {
   onClose: () => void;
   onContactAdded: () => void;
+  initialData?: Contact;
 }
 
 export default function AddContactForm({
   onClose,
   onContactAdded,
+  initialData,
 }: AddContactFormProps) {
-  const [newContact, setNewContact] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    position: "",
-    location: "",
+  const [newContact, setNewContact] = useState<Contact>({
+    _id: initialData?._id ?? "",
+    name: initialData?.name ?? "",
+    email: initialData?.email ?? "",
+    phone: initialData?.phone ?? "",
+    company: initialData?.company ?? "",
+    position: initialData?.position ?? "",
+    location: initialData?.location ?? "",
+    status: initialData?.status ?? "active",
+    lastContact: initialData?.lastContact ?? "",
+    createdAt: initialData?.createdAt ?? "",
   });
 
+  // If initialData changes (e.g., opening form for different contact), update state
+  useEffect(() => {
+    setNewContact({
+      _id: initialData?._id ?? "",
+      name: initialData?.name ?? "",
+      email: initialData?.email ?? "",
+      phone: initialData?.phone ?? "",
+      company: initialData?.company ?? "",
+      position: initialData?.position ?? "",
+      location: initialData?.location ?? "",
+      status: initialData?.status ?? "active",
+      lastContact: initialData?.lastContact ?? "",
+      createdAt: initialData?.createdAt ?? "",
+    });
+  }, [initialData]);
   const [loading, setLoading] = useState(false);
 
   const handleAddContact = async (e: React.FormEvent) => {
@@ -39,16 +60,6 @@ export default function AddContactForm({
       const position = formData.get("position") as string;
       const location = formData.get("location") as string;
 
-      console.log("Form submitted:", {
-        name,
-        email,
-        phone,
-        company,
-        position,
-        location,
-        formData: Object.fromEntries(formData.entries()),
-      });
-
       // Example: send data to API
       const res = await fetch("/api/contacts", {
         method: "POST",
@@ -58,7 +69,6 @@ export default function AddContactForm({
         body: JSON.stringify({ name, email }),
       });
 
-      console.log("Response received:", await res.json());
 
       if (!res.ok) {
         throw new Error("Failed to add contact");
@@ -66,14 +76,17 @@ export default function AddContactForm({
 
       onContactAdded();
       setNewContact({
+        _id: "",
         name: "",
         email: "",
         phone: "",
         company: "",
         position: "",
         location: "",
+        status: "active",
+        lastContact: "",
+        createdAt: "",
       });
-      console.log("Contact added successfully");
     } catch (error) {
       console.error("Error adding contact:", error);
     } finally {

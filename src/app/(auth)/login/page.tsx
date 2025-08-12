@@ -23,7 +23,6 @@ export default function Login() {
     if (result?.error) {
       console.error(result.error);
     } else {
-      console.log("Login successful!");
       router.push("/dashboard");
     }
   };

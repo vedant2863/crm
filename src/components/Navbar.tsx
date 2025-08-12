@@ -4,6 +4,7 @@ import { Bell, Search, User, LogOut, Menu } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import Logo from "./Logo";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -22,7 +23,7 @@ export default function Navbar() {
           <Menu className="h-6 w-6 text-gray-700" />
         </SidebarTrigger>
 
-        <p className="text-blue-700 font-bold text-lg">CRM System</p>
+        <Logo />
       </div>
 
       {/* Search */}
@@ -57,7 +58,9 @@ export default function Navbar() {
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
               <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                <div className="font-medium">{session?.user?.name}</div>
+                <div className="font-medium">
+                  {session?.user?.name || "User"}
+                </div>
                 <div className="text-gray-500">{session?.user?.email}</div>
               </div>
               <button

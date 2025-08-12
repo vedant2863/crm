@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Users, Search, Plus, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import StatsCard from "@/feature/contact/components/StatsCard";
 import AddContactForm from "@/feature/contact/components/AddContactForm";
+import EditContactForm from "@/feature/contact/components/EditContactForm";
 import ContactList from "@/feature/contact/components/ContactList";
 import { Contact } from "@/feature/contact/type";
+import Pagination from "@/components/Pagination";
 
 export default function ContactsPage() {
   const { data: session, status } = useSession();
@@ -19,7 +21,14 @@ export default function ContactsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // ✅ Fetch contacts from API
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const contactsPerPage = 5;
+
+  // State to hold the contact currently being edited (or null if none)
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+
+  // Fetch contacts on auth
   useEffect(() => {
     if (status === "authenticated") {
       fetchContacts();
@@ -27,6 +36,42 @@ export default function ContactsPage() {
       setLoading(false);
     }
   }, [status]);
+
+  // Function to handle contact update
+  const handleUpdateContact = async (updatedContact: Contact) => {
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/contacts/${updatedContact._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${
+              session?.accessToken || session?.user?.id
+            }`,
+          },
+          body: JSON.stringify(updatedContact),
+        }
+      );
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error("Failed to update contact: " + errorText);
+      }
+
+      // Update the local contacts state with the updated contact
+      setContacts((prev) =>
+        prev.map((c) => (c._id === updatedContact._id ? updatedContact : c))
+      );
+
+      setEditingContact(null);
+    } catch (error) {
+      console.error("Error updating contact:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchContacts = async () => {
     try {
@@ -50,13 +95,9 @@ export default function ContactsPage() {
         });
       }
       const data = await res.json();
-
-      // Ensure we got an array
       if (!Array.isArray(data.contacts)) {
-        console.error("API did not return an array:", data);
         throw new Error("API did not return an array");
       }
-
       setContacts(data.contacts);
     } catch (error) {
       console.error("Error fetching contacts:", error);
@@ -65,20 +106,81 @@ export default function ContactsPage() {
     }
   };
 
+  const handleDeleteContact = useCallback(
+    async (id: string) => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/contacts/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${
+                session?.accessToken || session?.user?.id
+              }`,
+            },
+          }
+        );
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error("Failed to delete contact", {
+            cause: new Error(errorText),
+          });
+        }
+        setContacts((prev) => {
+          const newContacts = prev.filter((contact) => contact._id !== id);
+          // Adjust page if deleting last item on page
+          if (
+            (currentPage - 1) * contactsPerPage >= newContacts.length &&
+            currentPage > 1
+          ) {
+            setCurrentPage(currentPage - 1);
+          }
+          return newContacts;
+        });
+      } catch (error) {
+        console.error("Error deleting contact:", error);
+      }
+    },
+    [session, currentPage]
+  );
+
+
+  const handleEditContact = (contact: Contact) => {
+    setEditingContact(contact);
+  };
+
   const handleAddContact = () => {
     fetchContacts();
     setShowAddForm(false);
   };
 
+  // Filter contacts by status and search term
   const filteredContacts = contacts.filter((contact) => {
-    const matchesSearch =
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      selectedStatus === "all" || contact.status === selectedStatus;
-    return matchesSearch && matchesStatus;
+    if (selectedStatus !== "all" && contact.status !== selectedStatus)
+      return false;
+
+    const term = searchTerm.toLowerCase();
+    if (term === "") return true;
+
+    return (
+      contact.name.toLowerCase().includes(term) ||
+      contact.email.toLowerCase().includes(term) ||
+      (contact.phone && contact.phone.toLowerCase().includes(term)) ||
+      (contact.company && contact.company.toLowerCase().includes(term)) ||
+      (contact.position && contact.position.toLowerCase().includes(term))
+    );
   });
+
+  // Pagination slicing of filtered contacts
+  const indexOfLast = currentPage * contactsPerPage;
+  const indexOfFirst = indexOfLast - contactsPerPage;
+  const currentContacts = filteredContacts.slice(indexOfFirst, indexOfLast);
+
+  // Reset page to 1 when filters/search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStatus]);
 
   if (status === "loading" || loading) {
     return (
@@ -177,11 +279,19 @@ export default function ContactsPage() {
         </CardContent>
       </Card>
 
-      {/* Add Contact Form */}
+      {/* Add/Edit Modals */}
       {showAddForm && (
         <AddContactForm
           onClose={() => setShowAddForm(false)}
           onContactAdded={handleAddContact}
+        />
+      )}
+
+      {editingContact && (
+        <EditContactForm
+          contact={editingContact}
+          onClose={() => setEditingContact(null)}
+          onContactUpdated={handleUpdateContact}
         />
       )}
 
@@ -191,7 +301,19 @@ export default function ContactsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : (
-        <ContactList contacts={filteredContacts} />
+        <>
+          <ContactList
+            onEdit={handleEditContact}
+            handleDeleteContact={handleDeleteContact}
+            contacts={currentContacts}
+          />
+          <Pagination
+            total={filteredContacts.length}
+            PerPage={contactsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
+        </>
       )}
     </div>
   );

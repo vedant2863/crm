@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build query
-    let query: any = { userId: session.user.id };
+    const query: { userId: string; $text?: { $search: string } } = { userId: session.user.id };
 
     // Add search functionality
     if (search) {

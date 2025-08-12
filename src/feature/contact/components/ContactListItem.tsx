@@ -1,28 +1,21 @@
 import { Building, Edit, Eye, Mail, MapPin, Phone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ContactStatusBadge from "./ContactStatusBadge";
-
-interface Contact {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  company?: string;
-  position?: string;
-  location?: string;
-  status: string;
-  lastContact: string;
-  createdAt: string;
-}
+import { Contact } from "../type";
 
 interface ContactListItemProps {
-  key: string;
   contact: Contact;
+  handleDeleteContact: (id: string) => Promise<void>;
+  onEditContact: (contact: Contact) => void;
 }
 
-export default function ContactListItem({ contact, key }: ContactListItemProps) {
+export default function ContactListItem({
+  contact,
+  handleDeleteContact,
+  onEditContact,
+}: ContactListItemProps) {
   return (
-    <div key={key} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+    <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
@@ -73,16 +66,22 @@ export default function ContactListItem({ contact, key }: ContactListItemProps) 
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4" />
-          </Button>
+          
           <Button
             variant="outline"
             size="sm"
+            onClick={() => onEditContact(contact)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             className="text-red-600 hover:text-red-800"
+            onClick={() => {
+              handleDeleteContact(contact._id);
+            }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

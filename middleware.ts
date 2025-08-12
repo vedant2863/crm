@@ -15,14 +15,14 @@ export default withAuth(
       return NextResponse.next();
     }
 
+    // All other routes require authentication
+    if (!token || pathname === "/") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
     // If user is logged in and tries to access login/register, redirect to dashboard
     if (token && (pathname === "/login" || pathname === "/register")) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-
-    // All other routes require authentication
-    if (!token) {
-      return NextResponse.redirect(new URL("/login", req.url));
     }
 
     return NextResponse.next();
