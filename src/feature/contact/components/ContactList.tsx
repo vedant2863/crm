@@ -17,7 +17,8 @@ export default function ContactList({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Contact List ({contacts.length})</CardTitle>
+        {/* <CardTitle>Contact List ({contacts.length})</CardTitle> */}
+        <CardTitle>Contact List</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

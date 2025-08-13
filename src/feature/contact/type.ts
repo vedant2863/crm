@@ -10,3 +10,9 @@ export interface Contact {
   lastContact: string;
   createdAt: string;
 }
+
+
+export interface ModalState {
+  add: boolean;
+  edit: Contact | null;
+}

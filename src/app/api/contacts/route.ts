@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build query
-    const query: { userId: string; $text?: { $search: string } } = { userId: session.user.id };
+    const query: { userId: string; $text?: { $search: string } } = {
+      userId: session.user.id,
+    };
 
     // Add search functionality
     if (search) {
@@ -38,12 +40,12 @@ export async function GET(request: NextRequest) {
     const total = await Contact.countDocuments(query);
 
     return NextResponse.json({
-      "contacts": contacts,
-      "pagination": {
-        "page": page,
-        "limit": limit,
-        "total": total,
-        "pages": Math.ceil(total / limit),
+      contacts: contacts,
+      pagination: {
+        page: page,
+        limit: limit,
+        total: total,
+        pages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
