@@ -10,15 +10,20 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // ✅ loading state
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true); // ✅ start loading
+
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
+
+    setLoading(false); // ✅ stop loading
 
     if (result?.error) {
       console.error(result.error);
@@ -68,9 +73,10 @@ export default function Login() {
         </div>
         <Button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 flex justify-center items-center"
+          disabled={!email || !password || loading} // ✅ disable when loading
         >
-          Login
+          {loading ? "Loading..." : "Login"}
         </Button>
         <p className="text-center mt-4">
           Don&apos;t have an account?{" "}
