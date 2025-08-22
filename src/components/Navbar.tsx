@@ -1,10 +1,11 @@
 "use client";
 
-import { Bell, Search, User, LogOut, Menu } from "lucide-react";
+import { Bell, User, LogOut, Menu } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import Logo from "./Logo";
+import SearchBox from "./SearchBox";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -27,13 +28,8 @@ export default function Navbar() {
       </div>
 
       {/* Search */}
-      <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-1 w-64">
-        <Search className="h-4 w-4 text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search contacts, deals, tasks..."
-          className="bg-transparent outline-none px-2 text-sm w-full"
-        />
+      <div className="hidden md:block">
+        <SearchBox />
       </div>
 
       {/* Right actions */}

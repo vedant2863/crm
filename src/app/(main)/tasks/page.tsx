@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,25 +19,13 @@ import {
   Flag,
   Filter
 } from "lucide-react";
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  dueDate: string;
-  assignedTo: string;
-  contactName?: string;
-  dealTitle?: string;
-  createdAt: string;
-  completedAt?: string;
-  tags: string[];
-}
+import { useTasks } from "@/hooks/useTasks";
+import { Task } from "@/feature/tasks/types/task";
+import { CreateTaskRequest } from "@/feature/tasks/services/taskService";
 
 const TASK_STATUSES = [
   { key: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-  { key: 'in-progress', label: 'In Progress', color: 'bg-blue-100 text-blue-800', icon: AlertCircle },
+  { key: 'in_progress', label: 'In Progress', color: 'bg-blue-100 text-blue-800', icon: AlertCircle },
   { key: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle2 },
   { key: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: AlertCircle }
 ];
@@ -45,163 +33,87 @@ const TASK_STATUSES = [
 const PRIORITY_LEVELS = [
   { key: 'low', label: 'Low', color: 'text-gray-600', bgColor: 'bg-gray-100' },
   { key: 'medium', label: 'Medium', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  { key: 'high', label: 'High', color: 'text-orange-600', bgColor: 'bg-orange-100' },
-  { key: 'urgent', label: 'Urgent', color: 'text-red-600', bgColor: 'bg-red-100' }
+  { key: 'high', label: 'High', color: 'text-orange-600', bgColor: 'bg-orange-100' }
 ];
 
 export default function TasksPage() {
   const { data: session, status } = useSession();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newTask, setNewTask] = useState<{
-    title: string;
-    description: string;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    dueDate: string;
-    contactName: string;
-    dealTitle: string;
-  }>({
+  const [newTask, setNewTask] = useState<CreateTaskRequest>({
     title: "",
     description: "",
     priority: "medium",
     dueDate: "",
-    contactName: "",
-    dealTitle: ""
+    tags: []
   });
 
-  // Mock data for demo purposes
-  useEffect(() => {
-    if (status === "authenticated") {
-      setTimeout(() => {
-        setTasks([
-          {
-            id: "1",
-            title: "Follow up with John Smith",
-            description: "Call to discuss website redesign proposal and answer questions",
-            status: "pending",
-            priority: "high",
-            dueDate: "2024-01-15",
-            assignedTo: "You",
-            contactName: "John Smith",
-            dealTitle: "Website Redesign Project",
-            createdAt: "2024-01-10",
-            tags: ["follow-up", "proposal"]
-          },
-          {
-            id: "2",
-            title: "Prepare enterprise software demo",
-            description: "Create customized demo for TechStart Inc showing key features",
-            status: "in-progress",
-            priority: "urgent",
-            dueDate: "2024-01-12",
-            assignedTo: "You",
-            contactName: "Sarah Johnson",
-            dealTitle: "Enterprise Software License",
-            createdAt: "2024-01-08",
-            tags: ["demo", "presentation"]
-          },
-          {
-            id: "3",
-            title: "Send marketing campaign proposal",
-            description: "Draft and send comprehensive digital marketing strategy document",
-            status: "completed",
-            priority: "medium",
-            dueDate: "2024-01-08",
-            assignedTo: "You",
-            contactName: "Mike Davis",
-            dealTitle: "Marketing Campaign",
-            createdAt: "2024-01-05",
-            completedAt: "2024-01-08",
-            tags: ["proposal", "marketing"]
-          },
-          {
-            id: "4",
-            title: "Research cloud migration tools",
-            description: "Compare AWS, Azure, and GCP migration services for client presentation",
-            status: "pending",
-            priority: "medium",
-            dueDate: "2024-01-20",
-            assignedTo: "You",
-            contactName: "Emily Chen",
-            dealTitle: "Cloud Migration Services",
-            createdAt: "2024-01-09",
-            tags: ["research", "cloud"]
-          },
-          {
-            id: "5",
-            title: "Schedule team meeting",
-            description: "Organize weekly team sync to discuss project progress",
-            status: "pending",
-            priority: "low",
-            dueDate: "2024-01-16",
-            assignedTo: "You",
-            createdAt: "2024-01-11",
-            tags: ["internal", "meeting"]
-          },
-          {
-            id: "6",
-            title: "Update CRM contact information",
-            description: "Review and update contact details for recent leads",
-            status: "cancelled",
-            priority: "low",
-            dueDate: "2024-01-10",
-            assignedTo: "You",
-            createdAt: "2024-01-05",
-            tags: ["maintenance", "data"]
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
-    } else if (status === "unauthenticated") {
-      setLoading(false);
+  const {
+    tasks,
+    loading,
+    error,
+    createTask,
+    updateTask,
+    deleteTask,
+    refetch,
+  } = useTasks({
+    search: searchTerm,
+    status: selectedStatus,
+    priority: selectedPriority,
+    limit: 100,
+  });
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createTask(newTask);
+      setNewTask({
+        title: "",
+        description: "",
+        priority: "medium",
+        dueDate: "",
+        tags: []
+      });
+      setShowAddForm(false);
+    } catch (err) {
+      console.error("Failed to create task:", err);
     }
-  }, [status]);
+  };
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.dealTitle?.toLowerCase().includes(searchTerm.toLowerCase());
+                         task.contactId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         task.dealId?.title?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === "all" || task.status === selectedStatus;
     const matchesPriority = selectedPriority === "all" || task.priority === selectedPriority;
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    const task: Task = {
-      id: Date.now().toString(),
-      title: newTask.title,
-      description: newTask.description,
-      status: 'pending',
-      priority: newTask.priority,
-      dueDate: newTask.dueDate,
-      assignedTo: "You",
-      contactName: newTask.contactName,
-      dealTitle: newTask.dealTitle,
-      createdAt: new Date().toISOString().split('T')[0],
-      tags: []
-    };
-    setTasks([task, ...tasks]);
-    setNewTask({ title: "", description: "", priority: "medium", dueDate: "", contactName: "", dealTitle: "" });
-    setShowAddForm(false);
+
+  const toggleTaskStatus = async (taskId: string) => {
+    try {
+      const task = tasks.find(t => t._id === taskId);
+      if (task) {
+        const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+        await updateTask(taskId, { status: newStatus });
+      }
+    } catch (err) {
+      console.error("Failed to update task status:", err);
+    }
   };
 
-  const toggleTaskStatus = (taskId: string) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
-        if (task.status === 'completed') {
-          return { ...task, status: 'pending', completedAt: undefined };
-        } else {
-          return { ...task, status: 'completed', completedAt: new Date().toISOString().split('T')[0] };
-        }
+  const handleDeleteTask = async (taskId: string) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      try {
+        await deleteTask(taskId);
+      } catch (err) {
+        console.error("Failed to delete task:", err);
+        alert("Failed to delete task. Please try again.");
       }
-      return task;
-    }));
+    }
   };
 
   const getStatusConfig = (status: string) => {
@@ -238,6 +150,19 @@ export default function TasksPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Please log in</h1>
           <p className="text-gray-600">You need to be logged in to access tasks.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Error Loading Tasks</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={refetch}>Try Again</Button>
         </div>
       </div>
     );
@@ -283,13 +208,13 @@ export default function TasksPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+                <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {getTasksCount('in-progress')}
+                  {getTasksCount('in_progress')}
                 </p>
               </div>
               <AlertCircle className="h-8 w-8 text-blue-600" />
@@ -365,7 +290,7 @@ export default function TasksPage() {
                 />
                 <select
                   value={newTask.priority}
-                  onChange={(e) => setNewTask({...newTask, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent'})}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value as 'low' | 'medium' | 'high'})}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {PRIORITY_LEVELS.map(priority => (
@@ -377,17 +302,6 @@ export default function TasksPage() {
                   placeholder="Due Date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
-                />
-                <Input
-                  placeholder="Contact Name"
-                  value={newTask.contactName}
-                  onChange={(e) => setNewTask({...newTask, contactName: e.target.value})}
-                />
-                <Input
-                  placeholder="Related Deal"
-                  value={newTask.dealTitle}
-                  onChange={(e) => setNewTask({...newTask, dealTitle: e.target.value})}
-                  className="md:col-span-1"
                 />
               </div>
               <textarea
@@ -445,16 +359,16 @@ export default function TasksPage() {
               const statusConfig = getStatusConfig(task.status);
               const priorityConfig = getPriorityConfig(task.priority);
               const StatusIcon = statusConfig.icon;
-              const overdue = isOverdue(task.dueDate, task.status);
+              const overdue = task.dueDate ? isOverdue(task.dueDate, task.status) : false;
 
               return (
-                <div key={task.id} className={`border rounded-lg p-4 transition-colors ${
+                <div key={task._id} className={`border rounded-lg p-4 transition-colors ${
                   task.status === 'completed' ? 'bg-gray-50 opacity-75' : 'hover:bg-gray-50'
                 } ${overdue ? 'border-l-4 border-l-red-500' : ''}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <button
-                        onClick={() => toggleTaskStatus(task.id)}
+                        onClick={() => toggleTaskStatus(task._id)}
                         className={`mt-1 p-1 rounded-full transition-colors ${
                           task.status === 'completed' 
                             ? 'text-green-600 hover:text-green-700' 
@@ -495,27 +409,29 @@ export default function TasksPage() {
                         )}
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600 mb-2">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span className={overdue ? 'text-red-600 font-medium' : ''}>
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                          {task.contactName && (
+                          {task.dueDate && (
                             <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              <span>{task.contactName}</span>
+                              <Calendar className="h-4 w-4" />
+                              <span className={overdue ? 'text-red-600 font-medium' : ''}>
+                                Due: {new Date(task.dueDate).toLocaleDateString()}
+                              </span>
                             </div>
                           )}
-                          {task.dealTitle && (
+                          {task.contactId && (
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span>{task.contactId.name} {task.contactId.company && `at ${task.contactId.company}`}</span>
+                            </div>
+                          )}
+                          {task.dealId && (
                             <div className="flex items-center gap-2">
                               <Flag className="h-4 w-4" />
-                              <span>{task.dealTitle}</span>
+                              <span>{task.dealId.title}</span>
                             </div>
                           )}
                         </div>
                         
-                        {task.tags.length > 0 && (
+                        {task.tags && task.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-2">
                             {task.tags.map((tag, index) => (
                               <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
@@ -527,8 +443,8 @@ export default function TasksPage() {
                         
                         <div className="text-xs text-gray-500">
                           Created: {new Date(task.createdAt).toLocaleDateString()}
-                          {task.completedAt && (
-                            <span> • Completed: {new Date(task.completedAt).toLocaleDateString()}</span>
+                          {task.status === 'completed' && task.updatedAt && (
+                            <span> • Completed: {new Date(task.updatedAt).toLocaleDateString()}</span>
                           )}
                         </div>
                       </div>
@@ -541,7 +457,12 @@ export default function TasksPage() {
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-800">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-600 hover:text-red-800"
+                        onClick={() => handleDeleteTask(task._id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

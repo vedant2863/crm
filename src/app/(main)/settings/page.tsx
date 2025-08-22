@@ -88,44 +88,160 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    if (session?.user) {
-      setProfile(prev => ({
-        ...prev,
-        name: session.user.name || '',
-        email: session.user.email || ''
-      }));
-    }
+    const fetchUserSettings = async () => {
+      if (session?.user) {
+        try {
+          const response = await fetch('/api/settings');
+          if (response.ok) {
+            const data = await response.json();
+            const user = data.user;
+            
+            setProfile({
+              name: user.name || '',
+              email: user.email || '',
+              phone: user.phone || '',
+              company: user.company || '',
+              position: user.position || '',
+              timezone: user.timezone || 'UTC',
+              language: user.language || 'en'
+            });
+            
+            if (user.notifications) {
+              setNotifications({
+                emailNotifications: user.notifications.emailNotifications ?? true,
+                pushNotifications: user.notifications.pushNotifications ?? false,
+                dealUpdates: user.notifications.dealUpdates ?? true,
+                taskReminders: user.notifications.taskReminders ?? true,
+                contactActivities: user.notifications.contactActivities ?? false,
+                weeklyReports: user.notifications.weeklyReports ?? true
+              });
+            }
+            
+            if (user.security) {
+              setSecurity({
+                twoFactorAuth: user.security.twoFactorAuth ?? false,
+                sessionTimeout: user.security.sessionTimeout ?? 30,
+                passwordStrength: 'medium',
+                loginHistory: user.security.loginHistory ?? true
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user settings:', error);
+        }
+      }
+    };
+    
+    fetchUserSettings();
   }, [session]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      setSaveSuccess('Profile updated successfully!');
+    
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...profile,
+          notifications,
+          security: {
+            twoFactorAuth: security.twoFactorAuth,
+            sessionTimeout: security.sessionTimeout,
+            loginHistory: security.loginHistory
+          }
+        }),
+      });
+      
+      if (response.ok) {
+        setSaveSuccess('Profile updated successfully!');
+        setTimeout(() => setSaveSuccess(''), 3000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      setSaveSuccess('Failed to update profile. Please try again.');
       setTimeout(() => setSaveSuccess(''), 3000);
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveNotifications = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      setSaveSuccess('Notification preferences updated!');
+    
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...profile,
+          notifications,
+          security: {
+            twoFactorAuth: security.twoFactorAuth,
+            sessionTimeout: security.sessionTimeout,
+            loginHistory: security.loginHistory
+          }
+        }),
+      });
+      
+      if (response.ok) {
+        setSaveSuccess('Notification preferences updated!');
+        setTimeout(() => setSaveSuccess(''), 3000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update notifications');
+      }
+    } catch (error) {
+      console.error('Failed to save notifications:', error);
+      setSaveSuccess('Failed to update notifications. Please try again.');
       setTimeout(() => setSaveSuccess(''), 3000);
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveSecurity = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      setSaveSuccess('Security settings updated!');
+    
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...profile,
+          notifications,
+          security: {
+            twoFactorAuth: security.twoFactorAuth,
+            sessionTimeout: security.sessionTimeout,
+            loginHistory: security.loginHistory
+          }
+        }),
+      });
+      
+      if (response.ok) {
+        setSaveSuccess('Security settings updated!');
+        setTimeout(() => setSaveSuccess(''), 3000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update security settings');
+      }
+    } catch (error) {
+      console.error('Failed to save security settings:', error);
+      setSaveSuccess('Failed to update security settings. Please try again.');
       setTimeout(() => setSaveSuccess(''), 3000);
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -134,15 +250,42 @@ export default function SettingsPage() {
       alert('Passwords do not match!');
       return;
     }
+    
+    const currentPassword = prompt('Please enter your current password:');
+    if (!currentPassword) {
+      return;
+    }
+    
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'change-password',
+          currentPassword,
+          newPassword
+        }),
+      });
+      
+      if (response.ok) {
+        setSaveSuccess('Password changed successfully!');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setSaveSuccess(''), 3000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      alert(error instanceof Error ? error.message : 'Failed to change password. Please try again.');
+    } finally {
       setLoading(false);
-      setSaveSuccess('Password changed successfully!');
-      setNewPassword('');
-      setConfirmPassword('');
-      setTimeout(() => setSaveSuccess(''), 3000);
-    }, 1000);
+    }
   };
 
   const handleExportData = () => {

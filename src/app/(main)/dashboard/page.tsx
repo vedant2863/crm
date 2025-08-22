@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useSession } from "next-auth/react";
 import {
   Card,
@@ -17,10 +17,15 @@ import {
   Calendar,
   CheckCircle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 interface DashboardStats {
   totalContacts: number;
   totalDeals: number;
+  totalTasks: number;
   totalRevenue: number;
   conversionRate: number;
   recentActivities: Array<{
@@ -29,6 +34,12 @@ interface DashboardStats {
     description: string;
     timestamp: string;
   }>;
+  pipelineStats: Array<{
+    stage: string;
+    count: number;
+    value: number;
+  }>;
+  taskStats: Record<string, number>;
 }
 
 export default function Dashboard() {
@@ -36,64 +47,158 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalContacts: 0,
     totalDeals: 0,
+    totalTasks: 0,
     totalRevenue: 0,
     conversionRate: 0,
     recentActivities: [],
+    pipelineStats: [],
+    taskStats: {},
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Memoized calculations for better performance
+  const chartData = useMemo(() => {
+    return stats.pipelineStats.map(stat => ({
+      stage: stat.stage.charAt(0).toUpperCase() + stat.stage.slice(1),
+      count: stat.count,
+      value: stat.value
+    }));
+  }, [stats.pipelineStats]);
+
+  const activeDeals = useMemo(() => {
+    return stats.pipelineStats
+      .filter(s => !['won', 'lost'].includes(s.stage.toLowerCase()))
+      .reduce((sum, s) => sum + s.count, 0);
+  }, [stats.pipelineStats]);
+
+  const totalPipelineValue = useMemo(() => {
+    return stats.pipelineStats.reduce((sum, stat) => sum + stat.value, 0);
+  }, [stats.pipelineStats]);
+
+  const totalPipelineDeals = useMemo(() => {
+    return stats.pipelineStats.reduce((sum, stat) => sum + stat.count, 0);
+  }, [stats.pipelineStats]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/dashboard');
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+      
+      const data = await response.json();
+      setStats(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard';
+      setError(errorMessage);
+      console.error("Error fetching stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Mock data for demo purposes
-    // In a real app, you'd fetch this from your API
-    const fetchStats = async () => {
-      try {
-        // Simulate API call
-        setTimeout(() => {
-          setStats({
-            totalContacts: 156,
-            totalDeals: 42,
-            totalRevenue: 125000,
-            conversionRate: 23.5,
-            recentActivities: [
-              {
-                id: "1",
-                type: "contact",
-                description: "New contact added: John Smith from ABC Corp",
-                timestamp: "2 minutes ago"
-              },
-              {
-                id: "2",
-                type: "deal",
-                description: "Deal moved to negotiation stage",
-                timestamp: "15 minutes ago"
-              },
-              {
-                id: "3",
-                type: "task",
-                description: "Task completed: Follow up with lead",
-                timestamp: "1 hour ago"
-              }
-            ]
-          });
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-        setLoading(false);
-      }
-    };
-
     if (status === "authenticated") {
       fetchStats();
     } else if (status === "unauthenticated") {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, fetchStats]);
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-lg">Loading dashboard...</div>
+      <div className="space-y-6">
+        {/* Welcome Section Skeleton */}
+        <div className="mb-8">
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Charts and Recent Activity Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Deal Pipeline Chart Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-32 mb-2" />
+              <Skeleton className="h-4 w-40" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[300px] w-full mb-4" />
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                <div className="text-center">
+                  <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                  <Skeleton className="h-3 w-16 mx-auto" />
+                </div>
+                <div className="text-center">
+                  <Skeleton className="h-8 w-20 mx-auto mb-2" />
+                  <Skeleton className="h-3 w-16 mx-auto" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Activity Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-32 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg">
+                    <Skeleton className="h-4 w-4 mt-1" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-32 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="flex items-center gap-3 p-4 border rounded-lg">
+                  <Skeleton className="h-5 w-5" />
+                  <div className="text-left flex-1">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -104,6 +209,18 @@ export default function Dashboard() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Please log in</h1>
           <p className="text-gray-600">You need to be logged in to access the dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Error Loading Dashboard</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Reload</Button>
         </div>
       </div>
     );
@@ -138,12 +255,14 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Deals</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Deals</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalDeals}</div>
-            <p className="text-xs text-muted-foreground">+7 from last month</p>
+            <p className="text-xs text-muted-foreground">
+              {activeDeals} active
+            </p>
           </CardContent>
         </Card>
 
@@ -180,41 +299,68 @@ export default function Dashboard() {
 
       {/* Charts and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Deal Pipeline Chart Placeholder */}
+        {/* Deal Pipeline Bar Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Deal Pipeline</CardTitle>
-            <CardDescription>Overview of deals by stage</CardDescription>
+            <CardDescription>Number of deals by stage</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">New</span>
-                <div className="flex items-center gap-2">
-                  <div className="bg-blue-200 h-2 w-16 rounded" />
-                  <span className="text-sm text-gray-600">12</span>
+            <ChartContainer
+              config={{
+                count: {
+                  label: "Number of Deals",
+                  color: "hsl(var(--chart-1))",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <BarChart
+                data={chartData}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <XAxis 
+                  dataKey="stage" 
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <ChartTooltip
+                  content={<ChartTooltipContent />}
+                  cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
+                />
+                <Bar 
+                  dataKey="count" 
+                  fill="var(--color-count)"
+                  radius={[4, 4, 0, 0]}
+                  name="Deals"
+                />
+              </BarChart>
+            </ChartContainer>
+            
+            {/* Summary Stats Below Chart */}
+            <div className="mt-4 grid grid-cols-2 gap-4 border-t pt-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-[hsl(var(--chart-1))]">
+                  {totalPipelineDeals}
                 </div>
+                <div className="text-xs text-muted-foreground">Total Deals</div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Contacted</span>
-                <div className="flex items-center gap-2">
-                  <div className="bg-yellow-200 h-2 w-12 rounded" />
-                  <span className="text-sm text-gray-600">8</span>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-[hsl(var(--chart-2))]">
+                  ${totalPipelineValue.toLocaleString()}
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Negotiation</span>
-                <div className="flex items-center gap-2">
-                  <div className="bg-orange-200 h-2 w-8 rounded" />
-                  <span className="text-sm text-gray-600">5</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Won</span>
-                <div className="flex items-center gap-2">
-                  <div className="bg-green-200 h-2 w-20 rounded" />
-                  <span className="text-sm text-gray-600">17</span>
-                </div>
+                <div className="text-xs text-muted-foreground">Total Value</div>
               </div>
             </div>
           </CardContent>

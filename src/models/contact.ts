@@ -6,6 +6,7 @@ export interface IContact extends Document {
   phone?: string;
   company?: string;
   position?: string;
+  status?: 'active' | 'lead' | 'inactive';
   tags?: string[];
   notes?: string;
   userId: mongoose.Types.ObjectId;
@@ -17,9 +18,10 @@ const contactSchema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
-    phone: { type: Number },
+    phone: { type: String },
     company: { type: String },
-    status: { type: String, enum: ["active", "prospect", "inactive"], default: "active" },
+    status: { type: String, enum: ["active", "lead", "inactive"], default: "active" },
+    position: { type: String },
     tags: [{ type: String, enum: ["important", "follow-up", "client", "lead"], default: "client" }],
     notes: { type: String },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
