@@ -1,6 +1,8 @@
 import { authOptions } from "@/lib/authOptions";
 import dbConnect from "@/lib/dbConnect";
+import { IDeal } from "@/models/deal";
 import Task from "@/models/task";
+import { FilterQuery } from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -22,9 +24,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build query
-    const query: any = {
-      userId: session.user.id,
-    };
+    // const query: { userId: string; $text?: { $search: string } } = {
+    //   userId: session.user.id,
+    // };
+
+    const query: FilterQuery<IDeal> = { userId: session.user.id };
 
     // Add search functionality
     if (search) {

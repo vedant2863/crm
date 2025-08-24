@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
+      dealStats,
       totalContacts,
       totalDeals,
       totalTasks,
