@@ -14,7 +14,10 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const { stats, loading, error, refresh } = useDashboard();
 
+  
+
   if (status === "loading" || loading) {
+    console.log("stats loading:", stats);
     return <DashboardSkeleton loading={loading} status="loading" />;
   }
 

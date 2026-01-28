@@ -48,6 +48,7 @@ export default function ContactsPage() {
     setLoading(true);
     try {
       const data = await getContacts(token);
+      console.log("fetched contacts:", data);
       setContacts(data);
     } catch (err) {
       console.error(err);
