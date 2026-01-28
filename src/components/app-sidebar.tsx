@@ -1,48 +1,51 @@
 "use client";
 
 import {
-  CheckLine,
-  Contact,
-  HeartHandshake,
-  Home,
+  CheckCircle2,
+  Users,
+  Briefcase,
+  LayoutDashboard,
   Settings,
+  LucideIcon
 } from "lucide-react";
-
+import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { signOut, useSession } from "next-auth/react";
-import { usePathname } from "next/navigation"; // ✅ for current route
-import { useState } from "react";
+import { usePathname } from "next/navigation";
 
-// Menu items
-const items = [
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+}
+
+const items: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: Home,
+    icon: LayoutDashboard,
   },
   {
     title: "Contacts",
     url: "/contacts",
-    icon: Contact,
+    icon: Users,
   },
   {
     title: "Deals",
     url: "/deals",
-    icon: HeartHandshake,
+    icon: Briefcase,
   },
   {
     title: "Tasks",
     url: "/tasks",
-    icon: CheckLine,
+    icon: CheckCircle2,
   },
   {
     title: "Settings",
@@ -52,31 +55,28 @@ const items = [
 ];
 
 export function AppSidebar() {
-  
   const pathname = usePathname();
 
   return (
-    <Sidebar className="top-16">
-      <SidebarContent>
+    <Sidebar className="top-16 border-r border-border bg-sidebar/50">
+      <SidebarContent className="p-4">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {items.map((item) => {
                 const isActive = pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a
-                        href={item.url}
-                        className={`flex items-center gap-2 rounded-md px-3 py-2 transition-colors ${
-                          isActive
-                            ? "bg-black text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </a>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={`h-11 px-4 rounded-xl transition-all duration-300 ${isActive ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      <Link href={item.url} className="flex items-center gap-3">
+                        <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="font-bold uppercase tracking-widest text-[10px]">{item.title}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -88,3 +88,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

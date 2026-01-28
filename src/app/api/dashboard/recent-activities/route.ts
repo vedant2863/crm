@@ -4,7 +4,7 @@ import Contact from "@/models/contact";
 import Deal from "@/models/deal";
 import Task from "@/models/task";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 function formatTimeAgo(date: Date) {
   const diff = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -14,7 +14,7 @@ function formatTimeAgo(date: Date) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id)

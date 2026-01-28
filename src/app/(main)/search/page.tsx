@@ -7,13 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSearch, SearchResult } from '@/hooks/useSearch';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 function SearchResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
-  
+
   const { results, loading, error, totalResults, search } = useSearch();
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -102,7 +101,7 @@ function SearchResultsContent() {
           <p className="text-gray-600 mt-2">
             {hasSearched && !loading && (
               <>
-                {totalResults > 0 
+                {totalResults > 0
                   ? `Found ${totalResults} results for "${query}"`
                   : `No results found for "${query}"`
                 }

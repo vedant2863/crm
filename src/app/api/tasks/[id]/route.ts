@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/authOptions";
 
 // GET task by ID
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -17,18 +17,18 @@ export async function GET(
 
     await dbConnect();
     const { id } = await params;
-    
-    const task = await Task.findOne({ 
-      _id: id, 
-      userId: session.user.id 
+
+    const task = await Task.findOne({
+      _id: id,
+      userId: session.user.id
     })
-    .populate('contactId', 'name company')
-    .populate('dealId', 'title');
-    
+      .populate('contactId', 'name company')
+      .populate('dealId', 'title');
+
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json({ task });
   } catch (error) {
     console.error("Error getting task:", error);
@@ -52,7 +52,7 @@ export async function PUT(
 
     await dbConnect();
     const { id } = await params;
-    
+
     const body = await request.json();
     const {
       title,
@@ -81,13 +81,13 @@ export async function PUT(
       },
       { new: true }
     )
-    .populate('contactId', 'name company')
-    .populate('dealId', 'title');
-    
+      .populate('contactId', 'name company')
+      .populate('dealId', 'title');
+
     if (!updatedTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json({ task: updatedTask });
   } catch (error) {
     console.error("Error updating task:", error);
@@ -100,7 +100,7 @@ export async function PUT(
 
 // DELETE task
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -111,12 +111,12 @@ export async function DELETE(
 
     await dbConnect();
     const { id } = await params;
-    
-    const task = await Task.findOneAndDelete({ 
-      _id: id, 
-      userId: session.user.id 
+
+    const task = await Task.findOneAndDelete({
+      _id: id,
+      userId: session.user.id
     });
-    
+
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }

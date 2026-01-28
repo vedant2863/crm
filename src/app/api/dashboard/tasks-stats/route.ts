@@ -2,9 +2,9 @@ import { authOptions } from "@/lib/authOptions";
 import dbConnect from "@/lib/dbConnect";
 import Task from "@/models/task";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id)

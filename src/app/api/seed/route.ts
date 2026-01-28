@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { seedDatabase } from "@/lib/seedData";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   // Only allow seeding in development
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json(
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await seedDatabase();
-    
+
     return NextResponse.json({
       message: "Database seeded successfully",
       data: {

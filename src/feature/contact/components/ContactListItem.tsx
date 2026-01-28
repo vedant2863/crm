@@ -1,4 +1,4 @@
-import { Building, Edit, Eye, Mail, MapPin, Phone, Trash2 } from "lucide-react";
+import { Building, Edit, Mail, MapPin, Phone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ContactStatusBadge from "./ContactStatusBadge";
 import { Contact } from "../type";
@@ -66,7 +66,7 @@ export default function ContactListItem({
         </div>
 
         <div className="flex items-center gap-2">
-          
+
           <Button
             variant="outline"
             size="sm"

@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/authOptions";
 import dbConnect from "@/lib/dbConnect";
 import Deal from "@/models/deal";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const DEAL_STAGES = [
   { key: "new", label: "New" },
@@ -14,7 +14,7 @@ const DEAL_STAGES = [
   { key: "lost", label: "Lost" },
 ];
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id)

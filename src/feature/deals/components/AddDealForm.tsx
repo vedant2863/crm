@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Deal } from "../types/deal";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,14 +28,14 @@ export default function AddDealForm({ onAdd, onCancel }: AddDealFormProps) {
 
   const handleAddDeal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!newDeal.title || newDeal.value <= 0 || !newDeal.contactName) {
       alert("Please fill in all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await onAdd({
         title: newDeal.title,
@@ -147,16 +147,16 @@ export default function AddDealForm({ onAdd, onCancel }: AddDealFormProps) {
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSubmitting || !newDeal.title || newDeal.value <= 0 || !newDeal.contactName}
             >
               {isSubmitting ? "Adding..." : "Add Deal"}

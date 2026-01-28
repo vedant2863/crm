@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/authOptions";
 
 // GET deal by ID
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -17,16 +17,16 @@ export async function GET(
 
     await dbConnect();
     const { id } = await params;
-    
-    const deal = await Deal.findOne({ 
-      _id: id, 
-      userId: session.user.id 
+
+    const deal = await Deal.findOne({
+      _id: id,
+      userId: session.user.id
     });
-    
+
     if (!deal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json({ deal });
   } catch (error) {
     console.error("Error getting deal:", error);
@@ -50,7 +50,7 @@ export async function PUT(
 
     await dbConnect();
     const { id } = await params;
-    
+
     const body = await request.json();
     const {
       title,
@@ -86,11 +86,11 @@ export async function PUT(
       },
       { new: true }
     );
-    
+
     if (!updatedDeal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json({ deal: updatedDeal });
   } catch (error) {
     console.error("Error updating deal:", error);
@@ -103,7 +103,7 @@ export async function PUT(
 
 // DELETE deal
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -114,12 +114,12 @@ export async function DELETE(
 
     await dbConnect();
     const { id } = await params;
-    
-    const deal = await Deal.findOneAndDelete({ 
-      _id: id, 
-      userId: session.user.id 
+
+    const deal = await Deal.findOneAndDelete({
+      _id: id,
+      userId: session.user.id
     });
-    
+
     if (!deal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }

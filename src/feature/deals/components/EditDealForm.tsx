@@ -29,14 +29,14 @@ export default function EditDealForm({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editedDeal.title || editedDeal.value <= 0 || !editedDeal.contactName) {
       alert("Please fill in all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await onUpdate({
         title: editedDeal.title,
@@ -117,7 +117,7 @@ export default function EditDealForm({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={editedDeal.stage}
                 onChange={(e) =>
-                  setEditedDeal({ ...editedDeal, stage: e.target.value as any })
+                  setEditedDeal({ ...editedDeal, stage: e.target.value as Deal['stage'] })
                 }
                 disabled={isSubmitting}
               >
@@ -169,15 +169,15 @@ export default function EditDealForm({
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               type="submit"
               disabled={isSubmitting || !editedDeal.title || editedDeal.value <= 0 || !editedDeal.contactName}
             >

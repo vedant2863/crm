@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Contact } from "../type";
+import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface AddContactFormProps {
   onClose: () => void;
@@ -30,140 +33,99 @@ export default function AddContactForm({
     createdAt: initialData?.createdAt ?? "",
   });
 
-  // If initialData changes (e.g., opening form for different contact), update state
-  useEffect(() => {
-    setNewContact({
-      _id: initialData?._id ?? "",
-      name: initialData?.name ?? "",
-      email: initialData?.email ?? "",
-      phone: initialData?.phone ?? "",
-      company: initialData?.company ?? "",
-      position: initialData?.position ?? "",
-      location: initialData?.location ?? "",
-      status: initialData?.status ?? "active",
-      lastContact: initialData?.lastContact ?? "",
-      createdAt: initialData?.createdAt ?? "",
-    });
-  }, [initialData]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setNewContact(initialData);
+    }
+  }, [initialData]);
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const formData = new FormData(e.target as HTMLFormElement);
 
-      const name = formData.get("name") as string;
-      const email = formData.get("email") as string;
-      const phone = formData.get("phone") as string;
-      const company = formData.get("company") as string;
-      const position = formData.get("position") as string;
-      const location = formData.get("location") as string;
+      // Simple validation
+      if (!newContact.name || !newContact.email) {
+        toast.error("Name and Email are required");
+        return;
+      }
 
-      // Example: send data to API
       const res = await fetch("/api/contacts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify(newContact),
       });
-
 
       if (!res.ok) {
         throw new Error("Failed to add contact");
       }
 
+      toast.success("Contact added successfully");
       onContactAdded();
-      setNewContact({
-        _id: "",
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        position: "",
-        location: "",
-        status: "active",
-        lastContact: "",
-        createdAt: "",
-      });
+      onClose();
     } catch (error) {
       console.error("Error adding contact:", error);
+      toast.error("Failed to add contact");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewContact(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Add New Contact</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleAddContact} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              name="name"
-              placeholder="Full Name *"
-              value={newContact.name}
-              onChange={(e) =>
-                setNewContact({ ...newContact, name: e.target.value })
-              }
-              required
-            />
-            <Input
-              name="email"
-              type="email"
-              placeholder="Email *"
-              value={newContact.email}
-              onChange={(e) =>
-                setNewContact({ ...newContact, email: e.target.value })
-              }
-              required
-            />
-            <Input
-              name="phone"
-              placeholder="Phone Number"
-              value={newContact.phone}
-              onChange={(e) =>
-                setNewContact({ ...newContact, phone: e.target.value })
-              }
-            />
-            <Input
-              name="company"
-              placeholder="Company"
-              value={newContact.company}
-              onChange={(e) =>
-                setNewContact({ ...newContact, company: e.target.value })
-              }
-            />
-            <Input
-              name="position"
-              placeholder="Position/Title"
-              value={newContact.position}
-              onChange={(e) =>
-                setNewContact({ ...newContact, position: e.target.value })
-              }
-            />
-            <Input
-              name="location"
-              placeholder="Location"
-              value={newContact.location}
-              onChange={(e) =>
-                setNewContact({ ...newContact, location: e.target.value })
-              }
-            />
+    <Dialog open={true} onOpenChange={(open: boolean) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Add New Contact</DialogTitle>
+          <DialogDescription>
+            Add a new contact to your CRM. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleAddContact} className="space-y-6 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name <span className="text-destructive">*</span></Label>
+              <Input id="name" name="name" placeholder="John Doe" value={newContact.name} onChange={handleChange} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
+              <Input id="email" name="email" type="email" placeholder="john@example.com" value={newContact.email} onChange={handleChange} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" name="phone" placeholder="+1 (555) 000-0000" value={newContact.phone} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company">Company</Label>
+              <Input id="company" name="company" placeholder="Acme Inc." value={newContact.company} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="position">Position</Label>
+              <Input id="position" name="position" placeholder="Marketing Manager" value={newContact.position} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" name="location" placeholder="New York, NY" value={newContact.location} onChange={handleChange} />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Adding..." : "Add Contact"}
-            </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-          </div>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Contact
+            </Button>
+          </DialogFooter>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

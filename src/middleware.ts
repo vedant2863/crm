@@ -6,23 +6,20 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth?.token;
 
-    // Allow auth-related routes
-    if (
-      pathname.startsWith("/api/auth") ||
-      pathname === "/login" ||
-      pathname === "/register"
-    ) {
-      return NextResponse.next();
-    }
+    // Allow public access to landing page, login, and register
+    const isPublicPath = pathname === "/" || pathname === "/login" || pathname === "/register";
+    const isAuthApi = pathname.startsWith("/api/auth");
 
-    // All other routes require authentication
-    if (!token || pathname === "/") {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+    if (isAuthApi) return NextResponse.next();
 
-    // If user is logged in and tries to access login/register, redirect to dashboard
+    // If logged in and on an auth page, redirect to dashboard
     if (token && (pathname === "/login" || pathname === "/register")) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // If not logged in and not on a public path, redirect to login
+    if (!token && !isPublicPath) {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
 
     return NextResponse.next();

@@ -2,32 +2,26 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import {
-  Target,
-  Plus,
-  DollarSign,
-  TrendingUp,
-  AlertCircle,
-} from "lucide-react";
-import StatsCard from "@/feature/deals/components/StatsCard";
-import AddDealForm from "@/feature/deals/components/AddDealForm";
-import { Deal } from "@/feature/deals/types/deal";
-import PipelineBoard from "@/feature/deals/components/PipelineBoard";
-import DealList from "@/feature/deals/components/DealList";
-import DealFilters from "@/feature/deals/components/DealFilterSearch";
-import { DEAL_STAGES } from "@/feature/deals/constants/deatstage";
-import { useDeals } from "@/hooks/useDeals";
+import { Plus, Target, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
-
+import { useDeals } from "@/hooks/useDeals";
+import { DEAL_STAGES } from "@/feature/deals/constants/deatstage";
+import { DealStats } from "@/feature/deals/components/DealStats";
+import { DealFilters } from "@/feature/deals/components/DealFilters";
+import { DealItem } from "@/feature/deals/components/DealItem";
+import { DealDialog } from "@/feature/deals/components/DealDialog";
+import PipelineBoard from "@/feature/deals/components/PipelineBoard";
+import { Deal } from "@/feature/deals/types/deal";
+import toast from "react-hot-toast";
 
 export default function DealsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStage, setSelectedStage] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "pipeline">("list");
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
 
   const {
     deals,
@@ -40,118 +34,68 @@ export default function DealsPage() {
   } = useDeals({
     search: searchTerm,
     stage: selectedStage,
-    limit: 100, // Get more deals for better filtering
+    limit: 100,
   });
 
-  const handleAddDeal = async (dealData: any) => {
+  const handleOpenDialog = (deal: Deal | null = null) => {
+    setEditingDeal(deal);
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (data: any) => {
     try {
-      await createDeal(dealData);
-      setShowAddForm(false);
+      if (editingDeal) {
+        await updateDeal(editingDeal._id, data);
+        toast.success("Deal updated");
+      } else {
+        await createDeal(data);
+        toast.success("Deal created");
+      }
     } catch (err) {
-      console.error("Failed to create deal:", err);
+      toast.error("Failed to save deal");
     }
   };
 
-  const filteredDeals = deals.filter((deal) => {
-    const matchesSearch =
-      deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deal.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deal.company?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStage =
-      selectedStage === "all" || deal.stage === selectedStage;
-
-    return matchesSearch && matchesStage;
-  });
-
-
-  const getStageColor = (stage: string) => {
-    const stageConfig = DEAL_STAGES.find((s) => s.key === stage);
-    return stageConfig?.color || "bg-gray-100 text-gray-800";
+  const handleAdvance = async (deal: Deal) => {
+    const currentIndex = DEAL_STAGES.findIndex(s => s.key === deal.stage);
+    if (currentIndex < DEAL_STAGES.length - 1) {
+      const nextStage = DEAL_STAGES[currentIndex + 1].key;
+      try {
+        await updateDeal(deal._id, { stage: nextStage });
+        toast.success(`Advanced to ${DEAL_STAGES[currentIndex + 1].label}`);
+      } catch (err) {
+        toast.error("Failed to advance stage");
+      }
+    }
   };
 
-  const getTotalValue = (stage?: string) => {
-    const relevantDeals = stage
-      ? deals.filter((d) => d.stage === stage)
-      : deals;
-    return relevantDeals.reduce((sum, deal) => sum + deal.value, 0);
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this deal?")) {
+      try {
+        await deleteDeal(id);
+        toast.success("Deal deleted");
+      } catch (err) {
+        toast.error("Failed to delete deal");
+      }
+    }
   };
 
-  const getWeightedValue = () => {
-    return deals.reduce(
-      (sum, deal) => sum + (deal.value * deal.probability) / 100,
-      0
-    );
-  };
-
-  if (status === "loading" || loading) {
+  if (status === "loading" || (loading && deals.length === 0)) {
     return (
       <div className="space-y-6">
-        {/* Header Skeleton */}
         <div className="flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-72" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
           </div>
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-28" />
-          </div>
+          <Skeleton className="h-10 w-32" />
         </div>
-
-        {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Skeleton className="h-4 w-24 mb-2" />
-                    <Skeleton className="h-8 w-16" />
-                  </div>
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
-
-        {/* Filters Skeleton */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <Skeleton className="h-10 flex-1" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Deal List Skeleton */}
+        <Skeleton className="h-20 w-full rounded-xl" />
         <div className="space-y-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <Skeleton className="h-6 w-48" />
-                      <Skeleton className="h-6 w-20 rounded-full" />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-28" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>
       </div>
     );
@@ -159,12 +103,10 @@ export default function DealsPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please log in</h1>
-          <p className="text-gray-600">
-            You need to be logged in to access deals.
-          </p>
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Authentication Required</h1>
+          <p className="text-muted-foreground">Please log in to manage your deals.</p>
         </div>
       </div>
     );
@@ -172,121 +114,83 @@ export default function DealsPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Error Loading Deals</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+          <h1 className="text-2xl font-bold">Error Loading Deals</h1>
+          <p className="text-muted-foreground">{error}</p>
           <Button onClick={refetch}>Try Again</Button>
         </div>
       </div>
     );
   }
 
+  const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
+  const weightedValue = deals.reduce((sum, d) => sum + (d.value * d.probability) / 100, 0);
+  const activeDeals = deals.filter(d => !["won", "lost"].includes(d.stage)).length;
+  const wonValue = deals.filter(d => d.stage === "won").reduce((sum, d) => sum + d.value, 0);
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your sales pipeline and track deal progress
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Deals</h1>
+          <p className="text-muted-foreground mt-1">Manage your sales pipeline and track deal progress.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                viewMode === "list"
-                  ? "bg-white shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              List View
-            </button>
-            <button
-              onClick={() => setViewMode("pipeline")}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                viewMode === "pipeline"
-                  ? "bg-white shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Pipeline View
-            </button>
-          </div>
-          <Button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add Deal
-          </Button>
-        </div>
+        <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
+          <Plus className="h-4 w-4 mr-2" /> Add Deal
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard
-          label="Total Pipeline"
-          value={getTotalValue()}
-          icon={<DollarSign className="h-8 w-8 text-green-600" />}
-        />
-        <StatsCard
-          label="Weighted Pipeline"
-          value={getWeightedValue()}
-          valueColor="text-blue-600"
-          icon={<TrendingUp className="h-8 w-8 text-blue-600" />}
-        />
-        <StatsCard
-          label="Active Deals"
-          value={deals.filter((d) => !["won", "lost"].includes(d.stage)).length}
-          icon={<Target className="h-8 w-8 text-purple-600" />}
-        />
-        <StatsCard
-          label="Won This Month"
-          value={getTotalValue("won")}
-          valueColor="text-green-600"
-          bgColor="bg-green-100"
-          dotColor="bg-green-600"
-        />
-      </div>
+      <DealStats
+        totalValue={totalValue}
+        weightedValue={weightedValue}
+        activeDeals={activeDeals}
+        wonValue={wonValue}
+      />
 
-      {/* Search and Filter */}
       <DealFilters
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         selectedStage={selectedStage}
         setSelectedStage={setSelectedStage}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
         stages={DEAL_STAGES}
       />
 
-      {/* Add Deal Form */}
-      {showAddForm && (
-        <>
-        <AddDealForm
-          onAdd={handleAddDeal}
-          onCancel={() => setShowAddForm(false)}
-          />
-          </>
+      {viewMode === "pipeline" ? (
+        <PipelineBoard stages={DEAL_STAGES} deals={deals} onEdit={handleOpenDialog} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {deals.map((deal) => (
+            <DealItem
+              key={deal._id}
+              deal={deal}
+              stages={DEAL_STAGES}
+              onEdit={handleOpenDialog}
+              onDelete={handleDelete}
+              onAdvance={handleAdvance}
+            />
+          ))}
+
+          {deals.length === 0 && (
+            <div className="text-center py-20 bg-card border rounded-2xl border-dashed">
+              <Target className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No deals found</h3>
+              <p className="text-muted-foreground">Try adjusting your filters or add a new deal.</p>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Pipeline View */}
-      {viewMode === "pipeline" && (
-        <PipelineBoard stages={DEAL_STAGES} deals={filteredDeals} />
-      )}
-
-      {/* List View */}
-      {viewMode === "list" && (
-        <DealList
-          stages={DEAL_STAGES}
-          getStageColor={getStageColor}
-          deals={filteredDeals}
-          onUpdateDeal={updateDeal}
-          onDeleteDeal={deleteDeal}
-        />
-      )}
+      <DealDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleSubmit}
+        initialData={editingDeal}
+      />
     </div>
   );
 }
+

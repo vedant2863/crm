@@ -4,7 +4,7 @@
 //         fetch("/api/dashboard/tasks-stats").then((r) => r.json()),
 
 
-class DashboardService {
+export class DashboardService {
     private baseUrl: string;
 
     constructor() {

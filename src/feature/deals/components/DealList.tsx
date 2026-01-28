@@ -15,13 +15,14 @@ import {
 } from "lucide-react";
 import { Deal } from "../types/deal";
 import { useState } from "react";
+import { CreateDealRequest } from "../services/dealService";
 import EditDealForm from "./EditDealForm";
 
 interface DealListProps {
   stages: { key: string; label: string; color: string }[];
   getStageColor: (stage: string) => string;
   deals: Deal[];
-  onUpdateDeal?: (id: string, dealData: any) => Promise<any>;
+  onUpdateDeal?: (id: string, dealData: Partial<CreateDealRequest>) => Promise<unknown>;
   onDeleteDeal?: (id: string) => Promise<void>;
 }
 
@@ -45,7 +46,7 @@ export default function DealList({
     }
   };
 
-  const handleUpdate = async (dealData: any) => {
+  const handleUpdate = async (dealData: Partial<CreateDealRequest>) => {
     if (editingDeal) {
       try {
         await onUpdateDeal?.(editingDeal._id, dealData);
@@ -148,8 +149,8 @@ export default function DealList({
                   </Button>
 
                   {/* Edit Deal */}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => setEditingDeal(deal)}
                     disabled={!onUpdateDeal}
@@ -158,8 +159,8 @@ export default function DealList({
                   </Button>
 
                   {/* Move Deal to Next Stage */}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => handleStageAdvance(deal)}
                     disabled={!onUpdateDeal || !getNextStage(deal.stage)}
@@ -169,8 +170,8 @@ export default function DealList({
                   </Button>
 
                   {/* Delete Deal */}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => handleDelete(deal._id)}
                     disabled={!onDeleteDeal}
@@ -194,7 +195,7 @@ export default function DealList({
             </div>
           )}
         </div>
-        
+
         {/* Edit Deal Modal */}
         {editingDeal && (
           <div className="mt-6">
