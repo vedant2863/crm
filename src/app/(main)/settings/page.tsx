@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { User, Bell, Shield, Database } from "lucide-react";
+import { User as UserIcon, Bell, Shield, Database } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileTab } from "@/feature/settings/components/ProfileTab";
@@ -10,6 +10,29 @@ import { NotificationsTab } from "@/feature/settings/components/NotificationsTab
 import { SecurityTab } from "@/feature/settings/components/SecurityTab";
 import { DataTab } from "@/feature/settings/components/DataTab";
 import toast from "react-hot-toast";
+
+interface UserSettings {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  position: string;
+  timezone: string;
+  language: string;
+  notifications: {
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    dealUpdates: boolean;
+    taskReminders: boolean;
+    contactActivities: boolean;
+    weeklyReports: boolean;
+  };
+  security: {
+    twoFactorAuth: boolean;
+    sessionTimeout: number;
+    loginHistory: boolean;
+  };
+}
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
@@ -51,12 +74,18 @@ export default function SettingsPage() {
         if (user.notifications) setNotifications(user.notifications);
         if (user.security) setSecurity(user.security);
       }
-    } catch (error) {
-      toast.error("Failed to load settings");
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(err)
+        toast.error(`${err.message}`)
+      } else {
+
+        toast.error("Failed to load settings");
+      }
     }
   };
 
-  const handleUpdateSettings = async (data: any) => {
+  const handleUpdateSettings = async (data: UserSettings) => {
     setLoading(true);
     try {
       const response = await fetch('/api/settings', {
@@ -70,6 +99,9 @@ export default function SettingsPage() {
         throw new Error("Update failed");
       }
     } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message)
+      }
       toast.error("Failed to update settings");
     } finally {
       setLoading(false);
@@ -101,6 +133,9 @@ export default function SettingsPage() {
         toast.error(err.error || "Failed to change password");
       }
     } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
       toast.error("An error occurred");
     } finally {
       setLoading(false);
@@ -127,7 +162,7 @@ export default function SettingsPage() {
           <aside className="lg:w-64 shrink-0">
             <TabsList className="flex flex-col h-auto w-full bg-transparent gap-1 p-0">
               {[
-                { value: "profile", label: "Profile", icon: User },
+                { value: "profile", label: "Profile", icon: UserIcon },
                 { value: "notifications", label: "Notifications", icon: Bell },
                 { value: "security", label: "Security", icon: Shield },
                 { value: "data", label: "Data & Privacy", icon: Database },

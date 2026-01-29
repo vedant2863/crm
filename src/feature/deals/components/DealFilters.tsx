@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Filter, LayoutList, Kanban } from "lucide-react";
+import { Search, LayoutList, Kanban } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";

@@ -1,20 +1,13 @@
 "use client";
 
 import { Deal } from "../types/deal";
-import { User, Building, Calendar, DollarSign, TrendingUp, MoreHorizontal, Edit, Trash2, ArrowRight } from "lucide-react";
+import { Building, Calendar, TrendingUp, Edit, Trash2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 
 interface DealItemProps {
     deal: Deal;
-    stages: any[];
+    stages: { key: string; label: string; color?: string }[];
     onEdit: (deal: Deal) => void;
     onDelete: (id: string) => void;
     onAdvance: (deal: Deal) => void;
@@ -64,7 +57,7 @@ export function DealItem({ deal, stages, onEdit, onDelete, onAdvance }: DealItem
 
                     {deal.notes && (
                         <p className="text-sm text-muted-foreground mb-4 line-clamp-1 italic">
-                            "{deal.notes}"
+                            &quot;{deal.notes}&quot;
                         </p>
                     )}
 

@@ -1,20 +1,29 @@
 "use client";
 
-import { Save, RefreshCw, Bell } from "lucide-react";
+import { Save, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+export interface NotificationState {
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    dealUpdates: boolean;
+    taskReminders: boolean;
+    contactActivities: boolean;
+    weeklyReports: boolean;
+}
+
 interface NotificationsTabProps {
-    notifications: any;
-    setNotifications: (notifications: any) => void;
+    notifications: NotificationState;
+    setNotifications: (notifications: NotificationState) => void;
     loading: boolean;
     onSave: () => void;
 }
 
 export function NotificationsTab({ notifications, setNotifications, loading, onSave }: NotificationsTabProps) {
-    const settings = [
+    const settings: { key: keyof NotificationState; label: string; desc: string }[] = [
         { key: 'emailNotifications', label: 'Email Notifications', desc: 'Summary of activities delivered to your inbox.' },
         { key: 'dealUpdates', label: 'Deal Updates', desc: 'Instant alerts when a deal changes stage.' },
         { key: 'taskReminders', label: 'Task Reminders', desc: 'Get notified before your tasks are due.' },

@@ -1,7 +1,6 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { User, Building, DollarSign } from "lucide-react";
+import { User, Building } from "lucide-react";
 import { Deal } from "../types/deal";
 
 interface Stage {

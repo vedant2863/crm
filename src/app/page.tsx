@@ -84,6 +84,7 @@ export default function LandingPage() {
                         <div className="mt-32 relative px-4 max-w-6xl mx-auto group">
                             <div className="absolute inset-0 bg-primary/20 blur-[120px] opacity-20 transform group-hover:scale-110 transition-transform duration-1000" />
                             <div className="relative border-4 border-white/10 rounded-[3rem] overflow-hidden shadow-3xl bg-card transition-all duration-700 group-hover:border-primary/30 group-hover:shadow-primary/10">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426"
                                     alt="Dashboard Preview"
@@ -102,7 +103,7 @@ export default function LandingPage() {
                             <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary mb-6">Core Capabilities</h2>
                             <h3 className="text-5xl lg:text-6xl font-black tracking-tight mb-8">Everything you need to <span className="text-primary italic">scale</span> your sales.</h3>
                             <p className="text-muted-foreground text-xl font-medium leading-relaxed">
-                                We've built CRM OS to be powerful yet incredibly simple to use. Focus on closing, not configuration.
+                                We ve built CRM OS to be powerful yet incredibly simple to use. Focus on closing, not configuration.
                             </p>
                         </div>
 
@@ -181,7 +182,7 @@ export default function LandingPage() {
                     <div className="container mx-auto px-4">
                         <div className="text-center max-w-3xl mx-auto mb-24">
                             <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary mb-6">Simple Pricing</h2>
-                            <h3 className="text-5xl lg:text-6xl font-black tracking-tight mb-8">Choose the plan that's right for your <span className="text-primary italic">growth</span>.</h3>
+                            <h3 className="text-5xl lg:text-6xl font-black tracking-tight mb-8">Choose the plan that s right for your <span className="text-primary italic">growth</span>.</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">

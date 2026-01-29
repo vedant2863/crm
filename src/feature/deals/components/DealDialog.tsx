@@ -21,7 +21,7 @@ interface DealDialogProps {
 
 export function DealDialog({ open, onOpenChange, onSubmit, initialData }: DealDialogProps) {
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState<any>({
+    const [formData, setFormData] = useState<CreateDealRequest>({
         title: "",
         value: 0,
         stage: "new",
@@ -131,7 +131,7 @@ export function DealDialog({ open, onOpenChange, onSubmit, initialData }: DealDi
                             <Label htmlFor="stage">Stage</Label>
                             <Select
                                 value={formData.stage}
-                                onValueChange={(val: any) => setFormData({ ...formData, stage: val })}
+                                onValueChange={(val) => setFormData({ ...formData, stage: val })}
                             >
                                 <SelectTrigger id="stage">
                                     <SelectValue placeholder="Select" />

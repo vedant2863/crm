@@ -13,6 +13,7 @@ import { DealItem } from "@/feature/deals/components/DealItem";
 import { DealDialog } from "@/feature/deals/components/DealDialog";
 import PipelineBoard from "@/feature/deals/components/PipelineBoard";
 import { Deal } from "@/feature/deals/types/deal";
+import { CreateDealRequest } from "@/feature/deals/services/dealService";
 import toast from "react-hot-toast";
 
 export default function DealsPage() {
@@ -42,7 +43,7 @@ export default function DealsPage() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: CreateDealRequest) => {
     try {
       if (editingDeal) {
         await updateDeal(editingDeal._id, data);
@@ -52,6 +53,9 @@ export default function DealsPage() {
         toast.success("Deal created");
       }
     } catch (err) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      }
       toast.error("Failed to save deal");
     }
   };
@@ -64,6 +68,9 @@ export default function DealsPage() {
         await updateDeal(deal._id, { stage: nextStage });
         toast.success(`Advanced to ${DEAL_STAGES[currentIndex + 1].label}`);
       } catch (err) {
+        if (err instanceof Error) {
+          console.error(err.message)
+        }
         toast.error("Failed to advance stage");
       }
     }
@@ -75,6 +82,8 @@ export default function DealsPage() {
         await deleteDeal(id);
         toast.success("Deal deleted");
       } catch (err) {
+        if (err instanceof Error) console.error(err.message)
+
         toast.error("Failed to delete deal");
       }
     }

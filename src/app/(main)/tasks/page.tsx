@@ -11,6 +11,7 @@ import { TaskFilters } from "@/feature/tasks/components/TaskFilters";
 import { TaskItem } from "@/feature/tasks/components/TaskItem";
 import { TaskDialog } from "@/feature/tasks/components/TaskDialog";
 import { Task } from "@/feature/tasks/types/task";
+import { CreateTaskRequest } from "@/feature/tasks/services/taskService";
 import toast from "react-hot-toast";
 
 const TASK_STATUSES = [
@@ -53,7 +54,7 @@ export default function TasksPage() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: CreateTaskRequest) => {
     try {
       if (editingTask) {
         await updateTask(editingTask._id, data);
@@ -63,7 +64,12 @@ export default function TasksPage() {
         toast.success("Task created");
       }
     } catch (err) {
-      toast.error("Failed to save task");
+      if (err instanceof Error) {
+        console.log(err);
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to save task");
+      }
     }
   };
 
@@ -74,7 +80,13 @@ export default function TasksPage() {
     try {
       await updateTask(taskId, { status: nextStatus });
     } catch (err) {
-      toast.error("Failed to update status");
+      if (err instanceof Error) {
+        console.log(err);
+        toast.error(err.message);
+      } else {
+
+        toast.error("Failed to update status");
+      }
     }
   };
 
@@ -83,7 +95,13 @@ export default function TasksPage() {
       await deleteTask(taskId);
       toast.success("Task deleted");
     } catch (err) {
-      toast.error("Failed to delete task");
+      if (err instanceof Error) {
+        console.log(err);
+        toast.error(err.message);
+      } else {
+
+        toast.error("Failed to delete task");
+      }
     }
   };
 

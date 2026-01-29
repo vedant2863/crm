@@ -9,9 +9,15 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface SecuritySettings {
+    twoFactorAuth: boolean;
+    loginHistory: boolean;
+    sessionTimeout: number;
+}
+
 interface SecurityTabProps {
-    security: any;
-    setSecurity: (security: any) => void;
+    security: SecuritySettings;
+    setSecurity: (security: SecuritySettings) => void;
     loading: boolean;
     onSave: () => void;
     onPasswordChange: (e: React.FormEvent) => void;

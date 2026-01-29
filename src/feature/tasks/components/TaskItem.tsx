@@ -1,7 +1,7 @@
 "use client";
 
 import { Task } from "../types/task";
-import { CheckCircle2, Calendar, User, Flag, Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { CheckCircle2, Calendar, User, Flag, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,8 +41,8 @@ export function TaskItem({ task, onToggleStatus, onDelete, onEdit }: TaskItemPro
                 <button
                     onClick={() => onToggleStatus(task._id)}
                     className={`shrink-0 mt-1 p-1 rounded-full border-2 transition-all ${isCompleted
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-muted-foreground/30 text-transparent hover:border-primary/50"
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "border-muted-foreground/30 text-transparent hover:border-primary/50"
                         }`}
                 >
                     <CheckCircle2 className="h-4 w-4 fill-current" />

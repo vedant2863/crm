@@ -31,46 +31,49 @@ export default function DealPipelineCard({
   totalPipelineValue,
 }: DealPipelineCardProps) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="flex flex-col">
+      <CardHeader className="items-center pb-2">
         <CardTitle>Deal Pipeline</CardTitle>
         <CardDescription>Number of deals by stage</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 pb-4">
         <ChartContainer
           config={{
             count: {
-              label: "Number of Deals",
-              color: "hsl(var(--chart-1))",
+              label: "Deals",
+              color: "var(--primary)",
             },
           }}
-          className="h-[300px]"
+          className="aspect-square max-h-[300px] min-h-[200px] w-full lg:aspect-video"
         >
           <BarChart
+            accessibilityLayer
             data={chartData}
             margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 5,
+              top: 5,
+              right: 10,
+              left: 10,
+              bottom: 0,
             }}
           >
             <XAxis
               dataKey="stage"
-              tick={{ fontSize: 12 }}
               tickLine={false}
+              tickMargin={10}
               axisLine={false}
+              tickFormatter={(value) => value.slice(0, 3)}
+              className="text-[10px]"
             />
-            <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+            <YAxis tickLine={false} tickMargin={10} axisLine={false} />
             <ChartTooltip
-              content={<ChartTooltipContent />}
-              cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
             />
             <Bar
               dataKey="count"
               fill="var(--color-count)"
               radius={[4, 4, 0, 0]}
-              name="Deals"
+              barSize={40}
             />
           </BarChart>
         </ChartContainer>
@@ -78,13 +81,13 @@ export default function DealPipelineCard({
         {/* Summary Stats Below Chart */}
         <div className="mt-4 grid grid-cols-2 gap-4 border-t pt-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-[hsl(var(--chart-1))]">
+            <div className="text-2xl font-bold text-primary">
               {totalPipelineDeals}
             </div>
             <div className="text-xs text-muted-foreground">Total Deals</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-[hsl(var(--chart-2))]">
+            <div className="text-2xl font-bold text-primary">
               ${totalPipelineValue.toLocaleString()}
             </div>
             <div className="text-xs text-muted-foreground">Total Value</div>

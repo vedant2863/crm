@@ -7,9 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface Profile {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    position: string;
+    timezone: string;
+    language: string;
+}
+
 interface ProfileTabProps {
-    profile: any;
-    setProfile: (profile: any) => void;
+    profile: Profile;
+    setProfile: (profile: Profile) => void;
     loading: boolean;
     onSave: (e: React.FormEvent) => void;
 }
@@ -19,7 +29,7 @@ export function ProfileTab({ profile, setProfile, loading, onSave }: ProfileTabP
         <>
             <CardHeader>
                 <CardTitle className="text-xl font-bold">Profile Information</CardTitle>
-                <CardDescription>Update your personal details and how you're seen in the CRM.</CardDescription>
+                <CardDescription>Update your personal details and how you&apos;re seen in the CRM.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={onSave} className="space-y-6">

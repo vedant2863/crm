@@ -7,9 +7,8 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Users, Target, CheckCircle2, Plus, ArrowUpRight } from "lucide-react";
+import { Users, Target, CheckCircle2, ArrowUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 
 export default function QuickActions() {
   const router = useRouter();

@@ -33,9 +33,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, initialData }: TaskDi
             setFormData({
                 title: initialData.title,
                 description: initialData.description || "",
-                priority: initialData.priority as any,
+                priority: initialData.priority as "low" | "medium" | "high",
                 dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : "",
-                status: initialData.status as any,
+                status: initialData.status as "pending" | "in_progress" | "completed" | "cancelled",
             });
         } else {
             setFormData({
@@ -87,7 +87,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, initialData }: TaskDi
                             <Label htmlFor="priority">Priority</Label>
                             <Select
                                 value={formData.priority}
-                                onValueChange={(val: any) => setFormData({ ...formData, priority: val })}
+                                onValueChange={(val) => setFormData({ ...formData, priority: val as "low" | "medium" | "high" })}
                             >
                                 <SelectTrigger id="priority">
                                     <SelectValue placeholder="Select" />
@@ -115,7 +115,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, initialData }: TaskDi
                             <Label htmlFor="status">Status</Label>
                             <Select
                                 value={formData.status}
-                                onValueChange={(val: any) => setFormData({ ...formData, status: val })}
+                                onValueChange={(val) => setFormData({ ...formData, status: val as "pending" | "in_progress" | "completed" | "cancelled" })}
                             >
                                 <SelectTrigger id="status">
                                     <SelectValue placeholder="Select" />

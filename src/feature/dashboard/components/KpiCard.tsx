@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, LucideIcon, Minus, TrendingUp } from "lucide-react";
+import { ArrowDown, ArrowUp, LucideIcon} from "lucide-react";
 import React from "react";
 
 interface KpiCardProps {

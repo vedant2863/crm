@@ -85,7 +85,7 @@ export default function AddContactForm({
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Add a new contact to your CRM. Click save when you're done.
+            Add a new contact to your CRM. Click save when you re done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleAddContact} className="space-y-6 py-4">

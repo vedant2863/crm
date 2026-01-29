@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Deal from "@/models/deal";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 
 const DEAL_STAGES = [
   { key: "new", label: "New" },
@@ -24,7 +25,7 @@ export async function GET() {
     const userId = session.user.id;
 
     const dealStats = await Deal.aggregate([
-      { $match: { userId } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
         $group: {
           _id: "$stage",

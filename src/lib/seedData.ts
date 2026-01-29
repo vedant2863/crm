@@ -25,7 +25,7 @@ export async function seedDatabase(): Promise<SeedResult> {
     console.log('🧹 Cleared existing data...');
 
     // Create users with hashed passwords
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const hashedPassword = await bcrypt.hash('vedantjadhav880', 10);
 
     const users = await Promise.all([
       User.create({
@@ -55,7 +55,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         timezone: 'UTC'
       }),
       User.create({
-        email: 'jane.smith@example.com',
+        email: 'vedantjadhav880@gmail.com',
         password: hashedPassword,
         name: 'Jane Smith',
         role: 'user',
@@ -246,7 +246,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         title: 'MegaSystems Annual Contract',
         description: 'Multi-year contract with professional services',
         value: 250000,
-        stage: 'lead',
+        stage: 'new',
         probability: 25,
         expectedCloseDate: new Date('2024-08-31'),
         contactId: contacts[3]._id,
