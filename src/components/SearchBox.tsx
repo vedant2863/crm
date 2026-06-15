@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, Users, Target, CheckCircle2, Loader2 } from 'lucide-react';
-import { useSearch, SearchResult } from '@/hooks/useSearch';
+import { useSearch, SearchResult } from '@/features/search/hooks/useSearch';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';

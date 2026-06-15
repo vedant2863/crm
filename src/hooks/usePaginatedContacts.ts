@@ -1,4 +1,4 @@
-import { Contact } from "@/feature/contact/type";
+import { Contact } from "@/features/contacts/types/type";
 import { useMemo } from "react";
 
 

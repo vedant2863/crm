@@ -1,236 +1,188 @@
-# CRM Application - Features & Setup Guide
+<div align="center">
 
-## 🚀 Features Implemented
+# 🚀 CRM OS
 
-### ✅ Complete Backend Integration
-- **Dashboard**: Real-time analytics with live data from MongoDB
-- **Contacts**: Full CRUD operations with search and filtering
-- **Deals**: Complete deal pipeline management
-- **Tasks**: Task management with status tracking
-- **Settings**: User profile and preferences management
+**A full-stack Customer Relationship Management platform built with Next.js 15, TypeScript, MongoDB and a premium glassmorphism design system.**
 
-### 🔍 Global Search Functionality
-- **Navbar Search**: Real-time search with dropdown results
-- **Cross-Entity Search**: Search across contacts, deals, and tasks simultaneously
-- **Smart Results**: Categorized results with status indicators
-- **Search Results Page**: Dedicated page for viewing all search results
+[![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![NextAuth](https://img.shields.io/badge/NextAuth.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://next-auth.js.org/)
 
-### 🗄️ Database & Seed Data
-- **MongoDB Integration**: Complete database setup with proper indexing
-- **Seed Data**: Comprehensive sample data for testing
-- **User Management**: Multi-user support with data isolation
-
-## 🛠️ Setup Instructions
-
-### 1. Environment Setup
-Create a `.env` file with your MongoDB connection string:
-```env
-# MongoDB connection
-MONGODB_URI=mongodb://localhost:27017/crm
-
-# NextAuth config
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key-here
-```
-### 2. Database Options
-### Option A — Use Local MongoDB
-
-Make sure you have MongoDB running locally on mongodb://localhost:27017.
-
-### Option B — Use Docker (recommended)
-
-If you don’t have MongoDB installed, spin it up with Docker:
-
-```bash
-docker compose up -d
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3.Start Development
-```bash
-npm run dev
-```
-
-## 🔍 Search Functionality
-
-### Navbar Search
-- **Location**: Top navigation bar (desktop only)
-- **Features**: 
-  - Real-time search with 300ms debounce
-  - Dropdown results with categorized sections
-  - Click to navigate to respective pages
-  - "View all results" link for comprehensive search
-
-### Search Capabilities
-- **Contacts**: Search by name, email, company, phone
-- **Deals**: Search by title, description, contact name, company
-- **Tasks**: Search by title, description
-
-### Search Results Page
-- **URL**: `/search?q=searchterm`
-- **Features**:
-  - Categorized results display
-  - Result counters by type
-  - Status indicators
-  - Direct navigation to items
-
-## 🎯 Key Features
-
-### Dashboard
-- **Live Statistics**: Real data from database
-- **Recent Activity**: Latest updates across all modules
-- **Pipeline Visualization**: Deal stages with counts
-- **KPI Cards**: Key performance indicators
-
-### Contacts Management
-- **Full CRUD**: Create, read, update, delete
-- **Status Management**: Lead, active, inactive
-- **Search & Filter**: Find contacts quickly
-- **Bulk Operations**: Mass actions on contacts
-
-### Deals Pipeline
-- **Stage Management**: Move deals through pipeline
-- **Value Tracking**: Monitor deal values and probabilities
-- **Contact Integration**: Link deals to contacts
-- **Pipeline Views**: List and Kanban board views
-
-### Tasks Management
-- **Priority System**: Low, medium, high priorities
-- **Status Tracking**: pending, in_progress, completed, cancelled
-- **Due Date Management**: Track deadlines
-- **Contact & Deal Links**: Associate tasks with other entities
-
-### Settings & Profile
-- **User Profile**: Complete profile management
-- **Notification Preferences**: Customize alerts
-- **Security Settings**: Password management, 2FA options
-- **Data Export**: Export user data
-
-## 🔧 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/[...nextauth]` - Authentication
-
-### Contacts
-- `GET /api/contacts` - List contacts
-- `POST /api/contacts` - Create contact
-- `GET /api/contacts/[id]` - Get contact
-- `PUT /api/contacts/[id]` - Update contact
-- `DELETE /api/contacts/[id]` - Delete contact
-
-### Deals
-- `GET /api/deals` - List deals
-- `POST /api/deals` - Create deal
-- `GET /api/deals/[id]` - Get deal
-- `PUT /api/deals/[id]` - Update deal
-- `DELETE /api/deals/[id]` - Delete deal
-
-### Tasks
-- `GET /api/tasks` - List tasks
-- `POST /api/tasks` - Create task
-- `GET /api/tasks/[id]` - Get task
-- `PUT /api/tasks/[id]` - Update task
-- `DELETE /api/tasks/[id]` - Delete task
-
-### Search
-- `GET /api/search?q=query` - Global search
-
-### Dashboard
-- `GET /api/dashboard/kpis` - Dashboard Kpis
-- `GET /api/dashboard/pipeline` - Dashboard pipeline
-- `GET /api/dashboard/recent-activities` - Dashboard recent-activities
-- `GET /api/dashboard/tasks-stats` - Dashboard tasks-stats
-
-### Settings
-- `GET /api/settings` - Get user settings
-- `PUT /api/settings` - Update user settings
-- `POST /api/settings` - Change password
-
-
-## 🎨 UI/UX Features
-
-### Responsive Design
-- **Mobile-First**: Optimized for all screen sizes
-- **Sidebar Navigation**: Collapsible sidebar with intuitive icons
-- **Search Integration**: Seamlessly integrated search
-
-### Visual Indicators
-- **Status Badges**: Color-coded status indicators
-- **Progress Bars**: Visual progress tracking
-- **Icons**: Lucide React icons throughout
-- **Loading States**: Proper loading indicators
-
-### User Experience
-- **Real-time Updates**: Live data synchronization
-- **Error Handling**: Comprehensive error messages
-- **Form Validation**: Client and server-side validation
-- **Keyboard Navigation**: Full keyboard accessibility
-
-## 🔐 Security Features
-
-### Authentication
-- **NextAuth.js**: Secure authentication system
-- **Session Management**: Automatic session handling
-- **Route Protection**: Protected routes and API endpoints
-
-### Data Security
-- **User Isolation**: Each user sees only their data
-- **Input Validation**: All inputs validated and sanitized
-- **Password Hashing**: bcryptjs for secure password storage
-
-## 🚀 Performance Optimizations
-
-### Database
-- **Indexing**: Proper MongoDB indexes for fast queries
-- **Pagination**: Efficient data loading
-- **Aggregation**: Optimized database queries
-
-### Frontend
-- **Debounced Search**: Reduced API calls
-- **Lazy Loading**: Components loaded as needed
-- **Optimistic Updates**: Immediate UI feedback
-
-## 🧪 Development & Testing
-
-### Commands Available
-```bash
-# Development
-npm run dev          # Start development server
-```
-
-### Testing the Search
-1. Start the application: `npm run dev`
-2. Login with test credentials
-3. Use the search bar in the navbar
-4. Try searching for:
-   - "Alice" (will find contact)
-   - "TechCorp" (will find contact and deal)
-   - "Follow up" (will find task)
-   - "Enterprise" (will find multiple items)
-
-## 📝 Notes
-
-- Search requires a minimum of 2 characters
-- All data is user-specific (multi-tenant architecture)
-- The application uses MongoDB for data persistence
-- Search results are limited to 20 items total across all categories
-
-## 🤝 Contributing
-
-The application is built with:
-- **Next.js 15** with App Router
-- **TypeScript** for type safety
-- **Tailwind CSS** for styling
-- **MongoDB** with Mongoose
-- **NextAuth.js** for authentication
-- **React Hook Form** for form handling
-- **Lucide React** for icons
+</div>
 
 ---
 
-🎉 **Your CRM application is now fully functional with complete backend integration, global search, and comprehensive seed data!**
+## 📸 Screenshots
+
+> **Live Demo** → [http://localhost:3001](http://localhost:3001)
+>
+> **Demo Credentials**
+> - Email: `vedantjadhav880@gmail.com`
+> - Password: `vedantjadhav880`
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 🔐 **Authentication** | JWT-based auth with NextAuth.js — register, login, session persistence |
+| 📊 **Analytics Dashboard** | Revenue forecast charts, deal pipeline funnel, task distribution donuts |
+| 👥 **Contact Management** | Full CRUD, search & filter, status tracking, paginated list |
+| 💼 **Deal Pipeline** | Kanban board + list view, stage advancement, probability-weighted revenue |
+| ✅ **Task Tracker** | Priority levels, status workflow, due-date tracking |
+| 🔍 **Global Search** | Instant cross-entity search across contacts, deals and tasks |
+| ⚙️ **User Settings** | Profile, notifications, security, and data management tabs |
+| 🌗 **Dark / Light Mode** | System-aware theming using CSS `oklch` colour tokens |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Next.js 15** — App Router, Server & Client components, Turbopack dev server
+- **TypeScript** — Strict type-safety across all components and API routes
+- **Tailwind CSS v4** — Utility-first styling with a custom `oklch` design token system
+- **shadcn/ui** — Accessible, composable component primitives (Card, Dialog, Tabs, Sidebar…)
+- **Recharts** — AreaChart, BarChart, PieChart for analytics widgets
+- **Lucide React** — Consistent icon system throughout
+
+### Backend
+- **Next.js API Routes** — RESTful endpoints for all entities
+- **MongoDB** — NoSQL document database for flexible CRM data
+- **Mongoose** — Schema validation, ObjectId casting, aggregation pipelines
+- **NextAuth.js** — Credential-based auth with bcrypt password hashing
+- **JWT Sessions** — Stateless session management
+
+### Design System
+- **Glassmorphism** — `backdrop-blur` + semi-transparent backgrounds
+- **oklch colour space** — Perceptually uniform indigo/violet palette
+- **Micro-animations** — Hover lifts, fade-ins, pulsing blobs
+- **Premium Cards** — Coloured glow orbs, subtle border transitions
+
+---
+
+## 🗂️ Project Architecture
+
+```
+src/
+├── app/
+│   ├── (auth)/           # Login & Register pages
+│   ├── (main)/           # Protected app routes
+│   │   ├── dashboard/    # Analytics dashboard
+│   │   ├── contacts/     # Contact management
+│   │   ├── deals/        # Deal pipeline
+│   │   ├── tasks/        # Task tracker
+│   │   ├── search/       # Global search
+│   │   └── settings/     # User preferences
+│   ├── api/              # REST API endpoints
+│   │   ├── auth/         # NextAuth + Register
+│   │   ├── contacts/     # CRUD + search
+│   │   ├── deals/        # CRUD + pipeline stats
+│   │   ├── tasks/        # CRUD + task stats
+│   │   ├── dashboard/    # KPIs, analytics, pipeline
+│   │   └── settings/     # Profile & security
+│   └── page.tsx          # Marketing landing page
+├── components/
+│   ├── Navbar.tsx        # Top navigation bar
+│   ├── app-sidebar.tsx   # Collapsible side navigation
+│   └── ui/               # shadcn/ui primitives
+├── features/             # Self-Contained Domain Modules
+│   ├── auth/             # Authentication Feature (components, services, API handlers)
+│   ├── contacts/         # Contacts Feature
+│   ├── dashboard/        # Dashboard Feature
+│   ├── deals/            # Deals Feature
+│   ├── tasks/            # Tasks Feature
+│   ├── search/           # Search Feature
+│   └── settings/         # Settings Feature
+├── components/           # Global Components Only (Navbar, app-sidebar, UI primitives)
+├── hooks/                # Global Hooks Only
+├── models/               # Mongoose database models
+├── utils/                # Global utility helper functions
+└── lib/                  # Database connectivity, Auth config, seed data
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- MongoDB (local or MongoDB Atlas)
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-username/crm-os.git
+cd crm-os
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment variables
+cp .env.example .env
+# Edit .env with your MongoDB URI and NextAuth secret
+
+# 4. Seed the database with demo data
+npm run seed
+
+# 5. Start the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Environment Variables
+
+```env
+MONGODB_URI=mongodb://localhost:27017/crm-os
+NEXTAUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=http://localhost:3000
+```
+
+---
+
+## 📋 API Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/contacts` | List all contacts |
+| `POST` | `/api/contacts` | Create a contact |
+| `PUT` | `/api/contacts/:id` | Update a contact |
+| `DELETE` | `/api/contacts/:id` | Delete a contact |
+| `GET` | `/api/deals` | List deals (filter by stage/search) |
+| `POST` | `/api/deals` | Create a deal |
+| `GET` | `/api/tasks` | List tasks (filter by status/priority) |
+| `POST` | `/api/tasks` | Create a task |
+| `GET` | `/api/dashboard/kpis` | Revenue, conversion rate, totals |
+| `GET` | `/api/dashboard/analytics` | Forecast, stage, task distribution |
+| `GET` | `/api/dashboard/pipeline` | Pipeline stage counts + values |
+| `GET` | `/api/search?q=term` | Cross-entity search |
+
+---
+
+## 🎨 Design System
+
+The app uses a custom `oklch` colour palette for both light and dark modes:
+
+| Token | Light | Dark |
+|---|---|---|
+| `--primary` | `oklch(0.55 0.18 260)` indigo | `oklch(0.65 0.18 260)` |
+| `--background` | `oklch(0.98 0.01 240)` | `oklch(0.12 0.02 260)` |
+| `--card` | `oklch(1 0 0)` | `oklch(0.16 0.03 260)` |
+
+---
+
+## 👤 Author
+
+**Vedant Jadhav**
+- GitHub: [@vedantjadhav](https://github.com/vedantjadhav)
+
+---
+
+## 📄 License
+
+MIT © 2026 Vedant Jadhav

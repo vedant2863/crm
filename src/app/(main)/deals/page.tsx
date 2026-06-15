@@ -5,15 +5,14 @@ import { useSession } from "next-auth/react";
 import { Plus, Target, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDeals } from "@/hooks/useDeals";
-import { DEAL_STAGES } from "@/feature/deals/constants/deatstage";
-import { DealStats } from "@/feature/deals/components/DealStats";
-import { DealFilters } from "@/feature/deals/components/DealFilters";
-import { DealItem } from "@/feature/deals/components/DealItem";
-import { DealDialog } from "@/feature/deals/components/DealDialog";
-import PipelineBoard from "@/feature/deals/components/PipelineBoard";
-import { Deal } from "@/feature/deals/types/deal";
-import { CreateDealRequest } from "@/feature/deals/services/dealService";
+import { useDeals, Deal } from "@/features/deals";
+import { DEAL_STAGES } from "@/features/deals/constants/deatstage";
+import { DealStats } from "@/features/deals/components/DealStats";
+import { DealFilters } from "@/features/deals/components/DealFilters";
+import { DealItem } from "@/features/deals/components/DealItem";
+import { DealDialog } from "@/features/deals/components/DealDialog";
+import PipelineBoard from "@/features/deals/components/PipelineBoard";
+import { CreateDealRequest } from "@/features/deals/services/deal-client-service";
 import toast from "react-hot-toast";
 
 export default function DealsPage() {

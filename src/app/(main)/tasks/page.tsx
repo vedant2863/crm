@@ -5,13 +5,12 @@ import { useSession } from "next-auth/react";
 import { Plus, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTasks } from "@/hooks/useTasks";
-import { TaskStats } from "@/feature/tasks/components/TaskStats";
-import { TaskFilters } from "@/feature/tasks/components/TaskFilters";
-import { TaskItem } from "@/feature/tasks/components/TaskItem";
-import { TaskDialog } from "@/feature/tasks/components/TaskDialog";
-import { Task } from "@/feature/tasks/types/task";
-import { CreateTaskRequest } from "@/feature/tasks/services/taskService";
+import { useTasks, Task } from "@/features/tasks";
+import { TaskStats } from "@/features/tasks/components/TaskStats";
+import { TaskFilters } from "@/features/tasks/components/TaskFilters";
+import { TaskItem } from "@/features/tasks/components/TaskItem";
+import { TaskDialog } from "@/features/tasks/components/TaskDialog";
+import { CreateTaskRequest } from "@/features/tasks/services/task-client-service";
 import toast from "react-hot-toast";
 
 const TASK_STATUSES = [

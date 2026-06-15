@@ -1,11 +1,13 @@
 "use client";
 
-import { Bell, LogOut, User } from "lucide-react";
+import { LogOut, User, Sun, Moon } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Logo from "./Logo";
 import SearchBox from "./SearchBox";
+import NotificationDropdown from "@/features/notifications/components/NotificationDropdown";
+import { useTheme } from "@/components/providers";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +20,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" });
@@ -27,8 +30,8 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md border-b border-border z-40 flex items-center px-4 py-4 justify-between transition-all">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        {/* Mobile menu trigger */}
-        <SidebarTrigger className="md:hidden" />
+        {/* Sidebar toggle trigger */}
+        <SidebarTrigger />
         <Logo />
       </div>
 
@@ -39,14 +42,21 @@ export default function Navbar() {
 
       {/* Right actions */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
-          </span>
-          <span className="sr-only">Notifications</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="rounded-full w-9 h-9 text-muted-foreground hover:text-foreground transition-all duration-300"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-[1.2rem] w-[1.2rem] transition-all duration-300 rotate-0 scale-100" />
+          ) : (
+            <Moon className="h-[1.2rem] w-[1.2rem] transition-all duration-300 rotate-0 scale-100" />
+          )}
         </Button>
+
+        <NotificationDropdown />
 
         {/* Profile Dropdown */}
         <DropdownMenu>

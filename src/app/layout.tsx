@@ -23,6 +23,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="antialiased">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('crm-theme') || 'dark';
+                  document.documentElement.classList.remove('light', 'dark');
+                  document.documentElement.classList.add(theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans min-h-screen bg-background text-foreground`}>
         <GlobalProviders>{children}</GlobalProviders>
       </body>

@@ -29,7 +29,7 @@ export async function seedDatabase(): Promise<SeedResult> {
 
     const users = await Promise.all([
       User.create({
-        email: 'john.doe@example.com',
+        email: 'vedantjadhav880@gmail.com',
         password: hashedPassword,
         name: 'John Doe',
         role: 'admin',
@@ -55,7 +55,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         timezone: 'UTC'
       }),
       User.create({
-        email: 'vedantjadhav880@gmail.com',
+        email: 'jane.smith@example.com',
         password: hashedPassword,
         name: 'Jane Smith',
         role: 'user',
@@ -209,6 +209,11 @@ export async function seedDatabase(): Promise<SeedResult> {
 
     console.log('📇 Created contacts...');
 
+    const now = new Date();
+    const getFutureDate = (monthsAhead: number, day: number) => {
+      return new Date(now.getFullYear(), now.getMonth() + monthsAhead, day);
+    };
+
     // Create deals
     const deals = await Promise.all([
       // Deals for John Doe
@@ -218,7 +223,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 125000,
         stage: 'negotiation',
         probability: 75,
-        expectedCloseDate: new Date('2024-03-15'),
+        expectedCloseDate: getFutureDate(0, 15),
+        contactName: contacts[0].name,
+        company: contacts[0].company,
         contactId: contacts[0]._id,
         userId: users[0]._id
       }),
@@ -228,7 +235,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 85000,
         stage: 'proposal',
         probability: 60,
-        expectedCloseDate: new Date('2024-04-30'),
+        expectedCloseDate: getFutureDate(1, 30),
+        contactName: contacts[1].name,
+        company: contacts[1].company,
         contactId: contacts[1]._id,
         userId: users[0]._id
       }),
@@ -238,7 +247,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 45000,
         stage: 'qualified',
         probability: 40,
-        expectedCloseDate: new Date('2024-05-15'),
+        expectedCloseDate: getFutureDate(2, 15),
+        contactName: contacts[2].name,
+        company: contacts[2].company,
         contactId: contacts[2]._id,
         userId: users[0]._id
       }),
@@ -248,7 +259,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 250000,
         stage: 'new',
         probability: 25,
-        expectedCloseDate: new Date('2024-08-31'),
+        expectedCloseDate: getFutureDate(5, 5),
+        contactName: contacts[3].name,
+        company: contacts[3].company,
         contactId: contacts[3]._id,
         userId: users[0]._id
       }),
@@ -260,7 +273,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 35000,
         stage: 'won',
         probability: 100,
-        expectedCloseDate: new Date('2024-01-15'),
+        expectedCloseDate: getFutureDate(-2, 15),
+        contactName: contacts[4].name,
+        company: contacts[4].company,
         contactId: contacts[4]._id,
         userId: users[1]._id
       }),
@@ -270,7 +285,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 55000,
         stage: 'negotiation',
         probability: 80,
-        expectedCloseDate: new Date('2024-03-01'),
+        expectedCloseDate: getFutureDate(1, 1),
+        contactName: contacts[5].name,
+        company: contacts[5].company,
         contactId: contacts[5]._id,
         userId: users[1]._id
       }),
@@ -280,7 +297,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 95000,
         stage: 'proposal',
         probability: 65,
-        expectedCloseDate: new Date('2024-04-15'),
+        expectedCloseDate: getFutureDate(2, 15),
+        contactName: contacts[6].name,
+        company: contacts[6].company,
         contactId: contacts[6]._id,
         userId: users[1]._id
       }),
@@ -292,7 +311,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 15000,
         stage: 'qualified',
         probability: 50,
-        expectedCloseDate: new Date('2024-06-30'),
+        expectedCloseDate: getFutureDate(3, 30),
+        contactName: contacts[7].name,
+        company: contacts[7].company,
         contactId: contacts[7]._id,
         userId: users[2]._id
       }),
@@ -302,7 +323,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 75000,
         stage: 'negotiation',
         probability: 70,
-        expectedCloseDate: new Date('2024-03-31'),
+        expectedCloseDate: getFutureDate(0, 25),
+        contactName: contacts[8].name,
+        company: contacts[8].company,
         contactId: contacts[8]._id,
         userId: users[2]._id
       }),
@@ -312,7 +335,9 @@ export async function seedDatabase(): Promise<SeedResult> {
         value: 120000,
         stage: 'lost',
         probability: 0,
-        expectedCloseDate: new Date('2024-02-28'),
+        expectedCloseDate: getFutureDate(-1, 28),
+        contactName: contacts[9].name,
+        company: contacts[9].company,
         contactId: contacts[9]._id,
         userId: users[2]._id
       })
@@ -328,7 +353,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Draft and send detailed proposal including pricing and timeline',
         status: 'pending',
         priority: 'high',
-        dueDate: new Date('2024-02-20'),
+        dueDate: getFutureDate(0, 5),
         userId: users[0]._id
       }),
       Task.create({
@@ -336,7 +361,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Coordinate with technical team for product demonstration',
         status: 'completed',
         priority: 'medium',
-        dueDate: new Date('2024-02-10'),
+        dueDate: getFutureDate(-1, 10),
         userId: users[0]._id
       }),
       Task.create({
@@ -344,7 +369,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Clarify technical requirements and timeline expectations',
         status: 'pending',
         priority: 'medium',
-        dueDate: new Date('2024-02-25'),
+        dueDate: getFutureDate(0, 10),
         userId: users[0]._id
       }),
       Task.create({
@@ -352,7 +377,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Create executive-level presentation focusing on ROI and strategic benefits',
         status: 'pending',
         priority: 'low',
-        dueDate: new Date('2024-03-05'),
+        dueDate: getFutureDate(1, 5),
         userId: users[0]._id
       }),
 
@@ -362,7 +387,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Welcome call and initial setup guidance',
         status: 'completed',
         priority: 'high',
-        dueDate: new Date('2024-01-20'),
+        dueDate: getFutureDate(-2, 20),
         userId: users[1]._id
       }),
       Task.create({
@@ -370,7 +395,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Review contract terms and negotiate API access levels',
         status: 'pending',
         priority: 'high',
-        dueDate: new Date('2024-02-22'),
+        dueDate: getFutureDate(0, 7),
         userId: users[1]._id
       }),
       Task.create({
@@ -378,7 +403,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Plan and schedule comprehensive training program',
         status: 'pending',
         priority: 'medium',
-        dueDate: new Date('2024-03-01'),
+        dueDate: getFutureDate(1, 1),
         userId: users[1]._id
       }),
 
@@ -388,7 +413,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Compile security and compliance documentation for review',
         status: 'pending',
         priority: 'high',
-        dueDate: new Date('2024-02-28'),
+        dueDate: getFutureDate(0, 14),
         userId: users[2]._id
       }),
       Task.create({
@@ -396,7 +421,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Draft partnership terms and revenue sharing model',
         status: 'pending',
         priority: 'medium',
-        dueDate: new Date('2024-03-10'),
+        dueDate: getFutureDate(1, 10),
         userId: users[2]._id
       }),
       Task.create({
@@ -404,7 +429,7 @@ export async function seedDatabase(): Promise<SeedResult> {
         description: 'Analyze why the deal was lost and document lessons learned',
         status: 'completed',
         priority: 'low',
-        dueDate: new Date('2024-03-05'),
+        dueDate: getFutureDate(0, 15),
         userId: users[2]._id
       })
     ]);

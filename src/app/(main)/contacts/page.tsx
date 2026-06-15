@@ -6,15 +6,14 @@ import { Users, Search, Plus, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import StatsCard from "@/feature/contact/components/StatsCard";
-import AddContactForm from "@/feature/contact/components/AddContactForm";
-import EditContactForm from "@/feature/contact/components/EditContactForm";
-import ContactList from "@/feature/contact/components/ContactList";
+import StatsCard from "@/features/contacts/components/StatsCard";
+import AddContactForm from "@/features/contacts/components/AddContactForm";
+import EditContactForm from "@/features/contacts/components/EditContactForm";
+import ContactList from "@/features/contacts/components/ContactList";
 import Pagination from "@/components/Pagination";
-import { useContacts } from "@/feature/contact/hooks/useContacts";
+import { useContacts, ModalState } from "@/features/contacts";
 import { usePaginatedContacts } from "@/hooks/usePaginatedContacts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ModalState } from "@/feature/contact/type";
 
 function ContactsSkeleton() {
   return (

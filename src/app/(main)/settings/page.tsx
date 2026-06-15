@@ -5,10 +5,11 @@ import { useSession } from "next-auth/react";
 import { User as UserIcon, Bell, Shield, Database } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProfileTab } from "@/feature/settings/components/ProfileTab";
-import { NotificationsTab } from "@/feature/settings/components/NotificationsTab";
-import { SecurityTab } from "@/feature/settings/components/SecurityTab";
-import { DataTab } from "@/feature/settings/components/DataTab";
+import { ProfileTab } from "@/features/settings/components/ProfileTab";
+import { NotificationsTab } from "@/features/settings/components/NotificationsTab";
+import { SecurityTab } from "@/features/settings/components/SecurityTab";
+import { DataTab } from "@/features/settings/components/DataTab";
+import AuditLogsTab from "@/features/settings/components/AuditLogsTab";
 import toast from "react-hot-toast";
 
 interface UserSettings {
@@ -36,6 +37,7 @@ interface UserSettings {
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === "admin";
   const [loading, setLoading] = useState(false);
 
   const [profile, setProfile] = useState({
@@ -176,6 +178,15 @@ export default function SettingsPage() {
                   {tab.label}
                 </TabsTrigger>
               ))}
+              {isAdmin && (
+                <TabsTrigger
+                  value="audit-logs"
+                  className="w-full justify-start gap-3 px-4 py-3 h-auto data-[state=active]:bg-primary/10 data-[state=active]:text-primary transition-all hover:bg-muted font-bold uppercase tracking-wider text-[10px]"
+                >
+                  <Shield className="h-4 w-4" />
+                  Security Audit Logs
+                </TabsTrigger>
+              )}
             </TabsList>
           </aside>
 
@@ -227,6 +238,12 @@ export default function SettingsPage() {
                   onDeleteAccount={() => toast.error("Please contact support to delete account")}
                 />
               </TabsContent>
+
+              {isAdmin && (
+                <TabsContent value="audit-logs" className="mt-0 focus-visible:ring-0">
+                  <AuditLogsTab />
+                </TabsContent>
+              )}
             </Card>
           </main>
         </div>

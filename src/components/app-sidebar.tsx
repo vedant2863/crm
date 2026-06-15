@@ -5,6 +5,7 @@ import {
   Users,
   Briefcase,
   LayoutDashboard,
+  Search,
   Settings,
   LucideIcon
 } from "lucide-react";

@@ -185,3 +185,78 @@
     transform: translateY(0);
   }
 }
+
+/* =========================================================
+   PREMIUM MODERN LOOK - GLOBAL OVERRIDES (COLOURS REMAIN SAME)
+   ========================================================= */
+
+/* Soft glass cards across the entire application */
+[data-slot="card"] {
+  background: oklch(from var(--card) l c h / 0.85) !important;
+  backdrop-filter: blur(16px) saturate(110%);
+  border: 1px solid oklch(from var(--border) l c h / 0.45) !important;
+  box-shadow: 0 8px 30px oklch(from var(--foreground) l c h / 0.02) !important;
+  border-radius: 1.5rem !important; /* rounded-3xl */
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-slot="card"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 20px 40px oklch(from var(--foreground) l c h / 0.05),
+    0 0 20px oklch(from var(--primary) l c h / 0.04) !important;
+  border-color: oklch(from var(--primary) l c h / 0.25) !important;
+}
+
+/* Sidebar and Navbar glass design */
+[data-slot="sidebar"] {
+  background: oklch(from var(--sidebar) l c h / 0.5) !important;
+  backdrop-filter: blur(20px);
+  border-right: 1px solid oklch(from var(--sidebar-border) l c h / 0.25) !important;
+  margin: 1rem 0 1rem 1rem;
+  height: calc(100vh - 6rem) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 10px 30px oklch(from var(--foreground) l c h / 0.02);
+}
+
+nav {
+  background: oklch(from var(--background) l c h / 0.8) !important;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid oklch(from var(--border) l c h / 0.25) !important;
+}
+
+/* Rounded capsule-like buttons */
+button, [data-slot="button"] {
+  border-radius: 9999px !important; /* Pill style */
+  font-weight: 600 !important;
+  letter-spacing: 0.025em;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Rounded inputs and selectors */
+input, select, textarea, [data-slot="input"] {
+  border-radius: 1rem !important;
+  border-color: oklch(from var(--border) l c h / 0.6) !important;
+  background-color: oklch(from var(--background) l c h / 0.4) !important;
+  transition: all 0.3s ease !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: oklch(from var(--primary) l c h / 0.5) !important;
+  background-color: var(--card) !important;
+  box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.15) !important;
+}
+
+/* Tabs List and Tab triggers styling */
+[data-slot="tabs-list"] {
+  border-radius: 1.25rem !important;
+  background: oklch(from var(--muted) l c h / 0.6) !important;
+  backdrop-filter: blur(8px);
+  padding: 4px !important;
+}
+
+[data-slot="tabs-trigger"] {
+  border-radius: 1rem !important;
+  font-weight: 700 !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}

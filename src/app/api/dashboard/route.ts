@@ -5,6 +5,7 @@ import Deal from "@/models/deal";
 import Task from "@/models/task";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 
 export async function GET() {
   try {
@@ -26,7 +27,7 @@ export async function GET() {
 
     // Get deal statistics
     const dealStats = await Deal.aggregate([
-      { $match: { userId: userId } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
         $group: {
           _id: "$stage",
@@ -87,7 +88,7 @@ export async function GET() {
 
     // Get task statistics
     const taskStats = await Task.aggregate([
-      { $match: { userId: userId } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
         $group: {
           _id: "$status",
