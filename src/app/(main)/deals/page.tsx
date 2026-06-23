@@ -75,6 +75,19 @@ export default function DealsPage() {
     }
   };
 
+  const handleMoveStage = async (dealId: string, nextStage: string) => {
+    try {
+      await updateDeal(dealId, { stage: nextStage });
+      const stageLabel = DEAL_STAGES.find(s => s.key === nextStage)?.label || nextStage;
+      toast.success(`Moved to ${stageLabel}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      }
+      toast.error("Failed to move deal");
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this deal?")) {
       try {
@@ -168,7 +181,12 @@ export default function DealsPage() {
       />
 
       {viewMode === "pipeline" ? (
-        <PipelineBoard stages={DEAL_STAGES} deals={deals} onEdit={handleOpenDialog} />
+        <PipelineBoard
+          stages={DEAL_STAGES}
+          deals={deals}
+          onEdit={handleOpenDialog}
+          onMoveStage={handleMoveStage}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {deals.map((deal) => (

@@ -37,7 +37,14 @@ export const TaskItem = memo(function TaskItem({ task, onToggleStatus, onDelete,
     };
 
     return (
-        <div className={`group relative bg-card border rounded-xl p-5 transition-all hover:shadow-md hover:border-primary/20 ${isCompleted ? "opacity-60" : ""} ${overdue ? "border-l-4 border-l-destructive" : ""}`}>
+        <div
+            draggable
+            onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", task._id);
+                e.dataTransfer.effectAllowed = "move";
+            }}
+            className={`group relative bg-card border rounded-xl p-5 transition-all hover:shadow-md hover:border-primary/20 cursor-grab active:cursor-grabbing ${isCompleted ? "opacity-60" : ""} ${overdue ? "border-l-4 border-l-destructive" : ""}`}
+        >
             <div className="flex items-start gap-4">
                 <button
                     onClick={() => onToggleStatus(task._id)}

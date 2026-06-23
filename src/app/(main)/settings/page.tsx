@@ -159,7 +159,7 @@ export default function SettingsPage() {
         <p className="text-muted-foreground text-lg">Manage your account preferences and global configuration.</p>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs defaultValue="profile" orientation="vertical" className="w-full">
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="lg:w-64 shrink-0">
             <TabsList className="flex flex-col h-auto w-full bg-transparent gap-1 p-0">

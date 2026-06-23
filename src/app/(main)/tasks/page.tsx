@@ -10,10 +10,11 @@ import { TaskStats } from "@/features/tasks/components/TaskStats";
 import { TaskFilters } from "@/features/tasks/components/TaskFilters";
 import { TaskItem } from "@/features/tasks/components/TaskItem";
 import { TaskDialog } from "@/features/tasks/components/TaskDialog";
+import { TaskBoard } from "@/features/tasks/components/TaskBoard";
 import { CreateTaskRequest } from "@/features/tasks/services/task-client-service";
 import toast from "react-hot-toast";
 
-const TASK_STATUSES = [
+const TASK_STATUSES: { key: "pending" | "in_progress" | "completed" | "cancelled"; label: string }[] = [
   { key: 'pending', label: 'Pending' },
   { key: 'in_progress', label: 'In Progress' },
   { key: 'completed', label: 'Completed' },
@@ -33,6 +34,7 @@ export default function TasksPage() {
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "board">("board");
 
   const {
     tasks,
@@ -85,6 +87,21 @@ export default function TasksPage() {
       } else {
 
         toast.error("Failed to update status");
+      }
+    }
+  };
+
+  const handleMoveStatus = async (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => {
+    try {
+      await updateTask(taskId, { status: newStatus });
+      const statusLabel = TASK_STATUSES.find(s => s.key === newStatus)?.label || newStatus;
+      toast.success(`Moved to ${statusLabel}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.log(err);
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to move task");
       }
     }
   };
@@ -158,9 +175,29 @@ export default function TasksPage() {
           <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
           <p className="text-muted-foreground mt-1">Manage your activities and stay productive.</p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
-          <Plus className="h-4 w-4 mr-2" /> Add Task
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex border rounded-full p-1 bg-muted/30">
+            <Button
+              variant={viewMode === "board" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("board")}
+              className="rounded-full font-bold text-xs"
+            >
+              Board
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-full font-bold text-xs"
+            >
+              List
+            </Button>
+          </div>
+          <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
+            <Plus className="h-4 w-4 mr-2" /> Add Task
+          </Button>
+        </div>
       </div>
 
       <TaskStats
@@ -181,25 +218,36 @@ export default function TasksPage() {
         priorities={PRIORITY_LEVELS}
       />
 
-      <div className="grid grid-cols-1 gap-4">
-        {tasks.map((task) => (
-          <TaskItem
-            key={task._id}
-            task={task}
-            onToggleStatus={handleToggleStatus}
-            onDelete={handleDelete}
-            onEdit={handleOpenDialog}
-          />
-        ))}
+      {viewMode === "board" ? (
+        <TaskBoard
+          statuses={TASK_STATUSES}
+          tasks={tasks}
+          onToggleStatus={handleToggleStatus}
+          onDelete={handleDelete}
+          onEdit={handleOpenDialog}
+          onMoveStatus={handleMoveStatus}
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {tasks.map((task) => (
+            <TaskItem
+              key={task._id}
+              task={task}
+              onToggleStatus={handleToggleStatus}
+              onDelete={handleDelete}
+              onEdit={handleOpenDialog}
+            />
+          ))}
 
-        {tasks.length === 0 && (
-          <div className="text-center py-20 bg-card border rounded-2xl border-dashed">
-            <CheckCircle2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-medium">All caught up!</h3>
-            <p className="text-muted-foreground">No tasks found matching your filters.</p>
-          </div>
-        )}
-      </div>
+          {tasks.length === 0 && (
+            <div className="text-center py-20 bg-card border rounded-2xl border-dashed">
+              <CheckCircle2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium">All caught up!</h3>
+              <p className="text-muted-foreground">No tasks found matching your filters.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <TaskDialog
         open={dialogOpen}

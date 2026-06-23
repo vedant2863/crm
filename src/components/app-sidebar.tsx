@@ -5,8 +5,6 @@ import {
   Users,
   Briefcase,
   LayoutDashboard,
-  Search,
-  Settings,
   LucideIcon
 } from "lucide-react";
 import Link from "next/link";
@@ -47,11 +45,6 @@ const items: MenuItem[] = [
     title: "Tasks",
     url: "/tasks",
     icon: CheckCircle2,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
   },
 ];
 
