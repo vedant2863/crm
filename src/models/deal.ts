@@ -8,10 +8,8 @@ export interface IDeal extends Document {
     | "new"
     | "qualified"
     | "proposal"
-    | "negotiation"
     | "won"
-    | "lost"
-    | "contacted";
+    | "lost";
   probability?: number;
   expectedCloseDate?: Date;
   contactName?: string;
@@ -38,10 +36,8 @@ const dealSchema = new Schema<IDeal>(
         "new",
         "qualified",
         "proposal",
-        "negotiation",
         "won",
         "lost",
-        "contacted",
       ],
       default: "new",
     },

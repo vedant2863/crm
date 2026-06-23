@@ -1,3 +1,8 @@
+/**
+ * @file src/lib/dbConnect.ts
+ * @description Mongoose connection manager with global caching to prevent multiple active connection promises in serverless environments.
+ */
+
 import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI || "";
@@ -12,6 +17,13 @@ if (!global.mongoose) {
 
 const cached = global.mongoose!;
 
+/**
+ * Establishes a cached connection to MongoDB using Mongoose.
+ * Prevents multiple concurrent connection promises in serverless contexts.
+ * 
+ * @returns {Promise<void>} Resolves when connection succeeds
+ * @throws {Error} If connection fails
+ */
 async function dbConnect(): Promise<void> {
   if (cached.conn) {
     return;

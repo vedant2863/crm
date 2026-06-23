@@ -14,10 +14,8 @@ import mongoose from "mongoose";
 
 const DEAL_STAGES = [
   { key: "new", label: "New" },
-  { key: "contacted", label: "Contacted" },
   { key: "qualified", label: "Qualified" },
   { key: "proposal", label: "Proposal" },
-  { key: "negotiation", label: "Negotiation" },
   { key: "won", label: "Won" },
   { key: "lost", label: "Lost" },
 ];
@@ -105,7 +103,7 @@ export async function getAnalytics(userId: string) {
   const forecastData = months.map((m) => ({ month: m.label, revenue: m.revenue, dealsCount: m.dealsCount }));
 
   // Stage distribution
-  const stageKeys = ["new", "qualified", "proposal", "negotiation", "won", "lost"];
+  const stageKeys = ["new", "qualified", "proposal", "won", "lost"];
   const stageMap = new Map(stageKeys.map((s) => [s, { value: 0, count: 0 }]));
   deals.forEach((d) => {
     const cur = stageMap.get(d.stage) || { value: 0, count: 0 };

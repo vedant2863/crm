@@ -1,9 +1,10 @@
 "use client";
 
-import { LogOut, User, Sun, Moon } from "lucide-react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { LogOut, User, Sun, Moon, LayoutDashboard, Briefcase, Layers, Users, CheckCircle2, StickyNote } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import Logo from "./Logo";
 import SearchBox from "./SearchBox";
 import NotificationDropdown from "@/features/notifications/components/NotificationDropdown";
@@ -21,27 +22,54 @@ import { Button } from "@/components/ui/button";
 export default function Navbar() {
   const { data: session } = useSession();
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" });
   };
 
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Leads", href: "/leads", icon: Briefcase },
+    { label: "Pipeline", href: "/pipeline", icon: Layers },
+    { label: "Contacts", href: "/contacts", icon: Users },
+    { label: "Follow-ups", href: "/follow-ups", icon: CheckCircle2 },
+    { label: "Notes", href: "/notes", icon: StickyNote },
+  ];
+
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md border-b border-border z-40 flex items-center px-4 py-4 justify-between transition-all">
+    <nav className="w-full h-16 bg-background/95 backdrop-blur-md border-b border-border z-40 flex items-center px-4 py-4 justify-between transition-all shrink-0">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        {/* Sidebar toggle trigger */}
-        <SidebarTrigger />
         <Logo />
       </div>
 
-      {/* Search */}
-      <div className="hidden md:block">
-        <SearchBox />
+      {/* Centered Pill Navigation with Icons */}
+      <div className="flex items-center border rounded-full p-0.5 sm:p-1 bg-muted/30 backdrop-blur-md border-border/40 max-w-[50vw] sm:max-w-none overflow-x-auto no-scrollbar">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href || (item.href === "/leads" && pathname === "/deals");
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                "px-2 sm:px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1 sm:gap-1.5",
+                isActive
+                  ? "bg-card text-foreground shadow-sm font-black"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Right actions */}
       <div className="flex items-center gap-4">
+        <SearchBox />
         <Button
           variant="ghost"
           size="icon"

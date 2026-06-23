@@ -22,7 +22,7 @@ export default function PipelineBoard({ stages, deals, onEdit, onMoveStage }: Pi
 
   // We usually don't show "Won" and "Lost" in the kanban board to keep it clean, 
   // or we show them as separate sections. Here we show all but maybe filter some.
-  const activeStages = stages.filter(s => !["won", "lost"].includes(s.key));
+  const activeStages = stages;
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4 min-h-[600px] scrollbar-hide">

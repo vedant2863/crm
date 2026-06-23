@@ -1,9 +1,15 @@
+/**
+ * @file src/lib/authOptions.ts
+ * @description NextAuth configuration options defining the session provider, JWT, cookie policies, and database-backed credentials authentication.
+ */
+
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import dbConnect from "./dbConnect";
 import User from "@/models/user";
 
+// Extend NextAuth default session & user objects to include custom fields like 'role' and 'id'
 declare module "next-auth" {
   interface Session {
     user: {

@@ -1,16 +1,17 @@
-import { AppSidebar } from "@/components/app-sidebar";
 import Navbar from "@/components/Navbar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import '../globals.css'
+import '../globals.css';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider className="h-screen overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden flex flex-col">
       <Navbar />
-      <AppSidebar />
-      <main className="flex-1 mt-16 p-5 h-[calc(100vh-4rem)] overflow-y-auto flex flex-col bg-background/50">
-        {children}
-      </main>
-    </SidebarProvider>
+      <div className="flex-1 flex relative overflow-hidden">
+        <main className="flex-1 px-6 py-6 overflow-y-auto bg-background/50">
+          <div className="w-full flex-1 flex flex-col">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
   );
 }

@@ -12,7 +12,7 @@ import EditContactForm from "@/features/contacts/components/EditContactForm";
 import ContactList from "@/features/contacts/components/ContactList";
 import Pagination from "@/components/Pagination";
 import { useContacts, ModalState } from "@/features/contacts";
-import { usePaginatedContacts } from "@/hooks/usePaginatedContacts";
+import { usePaginated } from "@/hooks/usePaginated";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function ContactsSkeleton() {
@@ -52,7 +52,7 @@ export default function ContactsPage() {
     perPage: 5,
   });
 
-  const { paginatedContacts, total } = usePaginatedContacts(contacts, filters);
+  const { paginatedContacts, total } = usePaginated(contacts, filters, ["name", "email", "phone", "company", "position"]);
   const [modal, setModal] = useState<ModalState>({ add: false, edit: null });
 
   useEffect(() => {

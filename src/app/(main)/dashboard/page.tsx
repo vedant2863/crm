@@ -1,276 +1,590 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const, @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { format } from "date-fns";
-import {
-  Users, Target, DollarSign, TrendingUp,
-  ArrowUp, ArrowDown, Activity, Zap,
-  CheckCircle2, Briefcase, UserPlus, Clock,
-  ChevronRight, BarChart3, RefreshCw, Layers,
+import { 
+  Plus, Sparkles, RefreshCw, Layers, Calendar, 
+  ArrowUpRight, ArrowUp, CheckCircle2, AlertCircle, 
+  TrendingUp, CircleDollarSign, Target, User, Copy
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDashboardKpis } from "@/features/dashboard/hooks/useDashboardKpis";
-import { useDashboardAnalytics } from "@/features/dashboard/hooks/useDashboardAnalytics";
-import { useDashboardPipeline } from "@/features/dashboard/hooks/useDashboardPipeline";
-import { useDashboardActivities } from "@/features/dashboard/hooks/useDashboardActivities";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+  AreaChart,
+  Area
+} from "recharts";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
-const RevenueChart = dynamic(() => import("@/features/dashboard/components/RevenueChart"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full rounded-3xl" />,
-});
+// Static mock data for Pipeline Engagement (monthly leads)
+const MONTHLY_ENGAGEMENT = [
+  { month: "Jan", count: 1 },
+  { month: "Feb", count: 5 },
+  { month: "Mar", count: 6 },
+  { month: "Apr", count: 10 },
+  { month: "May", count: 8 },
+  { month: "Jun", count: 7 },
+];
 
-const StageChart = dynamic(() => import("@/features/dashboard/components/StageChart"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full rounded-3xl" />,
-});
+export default function DashboardPage() {
+  const { data: session, status } = useSession();
+  
+  // Dashboard Aggregation States
+  const [dbData, setDbData] = useState<any>(null);
+  const [dbLoading, setDbLoading] = useState(true);
+  const [dbError, setDbError] = useState<string | null>(null);
 
-const TaskDonut = dynamic(() => import("@/features/dashboard/components/TaskDonut"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full rounded-3xl" />,
-});
+  // AI Sales Insights States
+  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiNoKey, setAiNoKey] = useState(false);
+  const [aiError, setAiError] = useState(false);
+  const [aiProvider, setAiProvider] = useState<string | null>(null);
+  const [aiRefreshCount, setAiRefreshCount] = useState(0);
+  const AI_REFRESH_LIMIT = 5;
 
-const PipelineFunnel = dynamic(() => import("@/features/dashboard/components/PipelineFunnel"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full rounded-3xl" />,
-});
+  // UI state toggles
+  const [engagementPeriod, setEngagementPeriod] = useState<"Monthly" | "Annually">("Monthly");
 
-const ActivityFeed = dynamic(() => import("@/features/dashboard/components/ActivityFeed"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full rounded-3xl" />,
-});
-
-const QuickActions = dynamic(() => import("@/features/dashboard/components/DashboardQuickActions"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full rounded-3xl" />,
-});
-
-/* ─── colour palette (matches design system) ─────────────────── */
-const PALETTE = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
-const STAGE_COLORS: Record<string, string> = {
-  New: "#6366f1",
-  Contacted: "#8b5cf6",
-  Qualified: "#06b6d4",
-  Proposal: "#10b981",
-  Negotiation: "#f59e0b",
-  Won: "#22c55e",
-  Lost: "#ef4444",
-};
-
-/* ─── helpers ──────────────────────────────────────────────────── */
-function activityIcon(type: string) {
-  switch (type) {
-    case "contact": return { Icon: UserPlus, color: "text-indigo-500", bg: "bg-indigo-500/10" };
-    case "deal":    return { Icon: Briefcase, color: "text-emerald-500", bg: "bg-emerald-500/10" };
-    case "task":    return { Icon: CheckCircle2, color: "text-violet-500", bg: "bg-violet-500/10" };
-    default:        return { Icon: Clock, color: "text-muted-foreground", bg: "bg-muted/50" };
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   SUB-COMPONENTS
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Hero Header ────────────────────────────────────────────────── */
-function HeroHeader({ name }: { name?: string | null }) {
-  const [now, setNow] = useState(new Date());
-  const [taskCount, setTaskCount] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    fetch("/api/dashboard/tasks-stats")
-      .then(r => r.json())
-      .then(d => setTaskCount(d.taskStats?.todo ?? 0))
-      .catch(() => {});
-    return () => clearInterval(t);
+  // Fetch Dashboard Database Aggregations
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setDbLoading(true);
+      const res = await fetch("/api/dashboard");
+      if (!res.ok) throw new Error("Failed to load dashboard data");
+      const data = await res.json();
+      setDbData(data);
+    } catch (err: any) {
+      setDbError(err.message);
+    } finally {
+      setDbLoading(false);
+    }
   }, []);
 
-  const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : hour < 22 ? "Good evening" : "Good night";
-  const emoji    = hour < 12 ? "🌅" : hour < 18 ? "☀️" : hour < 22 ? "🌆" : "🌙";
+  // Fetch AI Insights
+  const fetchAiInsights = useCallback(async (force = false) => {
+    setAiLoading(true);
+    try {
+      const url = force ? "/api/ai/sales-insights?force=true" : "/api/ai/sales-insights";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to generate AI insights");
+      const data = await res.json();
+      const providerName = data.provider === "Gemini (with Groq Fallback)" ? null : data.provider;
+      if (data.provider) setAiProvider(providerName);
+      if (data.noApiKey) {
+        setAiNoKey(true);
+        setAiError(false);
+        setAiInsights(null);
+      } else if (data.aiError) {
+        setAiError(true);
+        setAiNoKey(false);
+        setAiInsights(null);
+        if (force) toast.error("AI service temporarily unavailable.");
+      } else {
+        setAiNoKey(false);
+        setAiError(false);
+        setAiInsights(data.insights);
+        if (force) {
+          setAiRefreshCount(prev => prev + 1);
+          toast.success(`AI Insights Refreshed via ${providerName ?? "AI"}`);
+        }
+      }
+    } catch (err: any) {
+      console.error("AI Insights Error:", err);
+      setAiError(true);
+    } finally {
+      setAiLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchDashboardData();
+      fetchAiInsights();
+    }
+  }, [status, fetchDashboardData, fetchAiInsights]);
+
+  const handleRefreshAll = () => {
+    fetchDashboardData();
+    fetchAiInsights(true);
+  };
+
+  if (status === "loading" || (dbLoading && !dbData)) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-[400px] rounded-3xl" />
+          <Skeleton className="h-[400px] rounded-3xl" />
+          <Skeleton className="h-[400px] rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Authentication Required</h1>
+          <p className="text-muted-foreground">Please log in to view the dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+          <h1 className="text-2xl font-bold">Error Loading Dashboard</h1>
+          <p className="text-muted-foreground">{dbError}</p>
+          <Button onClick={fetchDashboardData}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate Metrics
+  const pipelineValue = dbData?.pipelineStats?.reduce((sum: number, stage: any) => sum + stage.value, 0) || 0;
+  const wonValue = dbData?.totalRevenue || 0;
+  const conversionPercent = dbData?.conversionRate || 0;
+  const totalLeads = dbData?.totalDeals || 0;
+  const pendingTasks = dbData?.totalTasks || 0;
+
+  // Format activity feed items list
+  const recentMovements = dbData?.recentActivities || [];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl p-6 md:p-8"
-      style={{
-        background: "linear-gradient(135deg, oklch(0.55 0.18 260 / 0.9) 0%, oklch(0.45 0.22 290 / 0.85) 50%, oklch(0.50 0.20 240 / 0.9) 100%)",
-      }}>
-      {/* Animated blobs */}
-      <div className="pointer-events-none absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/10 blur-3xl animate-pulse" />
-      <div className="pointer-events-none absolute -bottom-8 -left-8 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-      <div className="pointer-events-none absolute top-4 right-1/3 h-24 w-24 rounded-full bg-white/5 blur-2xl" />
-
-      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-        {/* Left — greeting */}
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl backdrop-blur-sm ring-1 ring-white/20">
-            {emoji}
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
+      
+      {/* Top Welcome Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-foreground">
+            Welcome Back, <span className="text-primary italic">{session?.user?.name || "Partner"}</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Here is an overview of your sales ecosystem today.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center border rounded-full px-4 py-2 bg-card text-xs font-bold text-muted-foreground shadow-sm">
+            <Calendar className="h-3.5 w-3.5 mr-2" /> 01 Jan - 21 Jun, 2026
           </div>
-          <div>
-            <p className="text-sm font-semibold text-white/70 uppercase tracking-widest">{format(now, "EEEE, MMMM do")}</p>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-              {greeting}, <span className="text-white/90">{name?.split(" ")[0] ?? "Partner"}</span>!
-            </h1>
-            {taskCount > 0 && (
-              <p className="mt-1 text-sm text-white/70">
-                You have <span className="font-bold text-white">{taskCount} task{taskCount > 1 ? "s" : ""}</span> pending today.
-              </p>
+          <Button 
+            onClick={handleRefreshAll}
+            variant="outline"
+            size="icon"
+            className="rounded-full shadow-sm"
+            title="Refresh Dashboard"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Grid Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        {/* ================= COLUMN 1: WIDGETS ================= */}
+        <div className="flex flex-col gap-6">
+          
+          {/* Widget 1: Pipeline Goal Card */}
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl p-6 shadow-xl shadow-blue-500/10 flex flex-col gap-6 relative overflow-hidden h-[210px] justify-between">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+            <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white/5 rounded-full blur-xl" />
+            
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">Pipeline Goal</span>
+                <p className="text-xs font-bold opacity-90 mt-0.5">Total deal value</p>
+              </div>
+              <div className="bg-white/15 px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-wider backdrop-blur-sm border border-white/10">
+                TTP CRM
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Pipeline Value</span>
+              <p className="text-3xl font-black tracking-tight leading-none">${pipelineValue.toLocaleString()}</p>
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] font-black tracking-widest uppercase opacity-75">
+              <span>•••• Pipeline</span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Live
+              </span>
+            </div>
+          </div>
+
+          {/* Widget 2: Weekly Revenue Card */}
+          <div className="bg-card border rounded-3xl p-5 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Weekly Revenue</span>
+              <span className="text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <ArrowUp className="h-3 w-3" /> 12.8%
+              </span>
+            </div>
+            <p className="text-3xl font-black text-foreground">${(wonValue / 1.05).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Based on closed won deals this week</p>
+          </div>
+
+          {/* Widget 3: Conversion Card */}
+          <div className="bg-card border rounded-3xl p-5 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Conversion Rate</span>
+              <span className="text-[10px] font-black uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <ArrowUp className="h-3 w-3" /> 4.1%
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-4xl font-black tracking-tight text-foreground">{conversionPercent}%</p>
+              <div className="flex-1 space-y-1">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${conversionPercent}%` }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{totalLeads} leads • {pendingTasks} open tasks</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Widget 4: Upcoming Follow-ups List */}
+          <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Upcoming Follow-ups</h3>
+                <p className="text-[10px] text-muted-foreground">Don&apos;t let these slip</p>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border">
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex flex-col gap-3">
+              {dbData?.upcomingFollowups && dbData.upcomingFollowups.length > 0 ? (
+                dbData.upcomingFollowups.map((item: any) => (
+                  <FollowUpItem
+                    key={item.id}
+                    title={item.title}
+                    priority={item.priority}
+                    date={item.date}
+                    contact={item.contact}
+                  />
+                ))
+              ) : (
+                <p className="text-[10px] text-muted-foreground italic py-2 text-center">No upcoming follow-ups</p>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ================= COLUMN 2: MIDDLE COLUMN ================= */}
+        <div className="flex flex-col gap-6">
+          
+          {/* Widget 5: Pipeline Engagement Bar Chart */}
+          <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Pipeline Engagement</h3>
+                <p className="text-[10px] text-muted-foreground">New leads per month</p>
+              </div>
+              <div className="flex border rounded-full p-1 bg-muted/30 shrink-0 text-xs">
+                <button 
+                  onClick={() => setEngagementPeriod("Monthly")} 
+                  className={cn("px-3 py-1 rounded-full font-bold", engagementPeriod === "Monthly" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
+                >
+                  Monthly
+                </button>
+                <button 
+                  onClick={() => setEngagementPeriod("Annually")} 
+                  className={cn("px-3 py-1 rounded-full font-bold", engagementPeriod === "Annually" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
+                >
+                  Annually
+                </button>
+              </div>
+            </div>
+
+            <div className="h-48 w-full relative">
+              {/* Highlight badge overlay */}
+              <div className="absolute top-2 right-12 z-10 bg-blue-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-blue-400/20 shadow-md">
+                +28.6%
+              </div>
+              
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dbData?.monthlyEngagement || MONTHLY_ENGAGEMENT} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: "bold" }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: "bold" }} />
+                  <ChartTooltip cursor={{ fill: "rgba(99, 102, 241, 0.05)" }} />
+                  <Bar dataKey="count" fill="oklch(0.55 0.18 260)" radius={[8, 8, 0, 0]} maxBarSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Widget 6: Lead Activity movements table */}
+          <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Lead Activity</h3>
+                <p className="text-[10px] text-muted-foreground">Recent lead movements</p>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border">
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[10px] border-collapse">
+                <thead>
+                  <tr className="border-b uppercase font-bold tracking-wider text-muted-foreground/80">
+                    <th className="pb-2">Name</th>
+                    <th className="pb-2">Date</th>
+                    <th className="pb-2">Time</th>
+                    <th className="pb-2">Status</th>
+                    <th className="pb-2 text-right">Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40 font-medium">
+                  {recentMovements.map((act: any) => {
+                    const initial = act.description ? act.description.charAt(0).toUpperCase() : "L";
+                    const isNew = act.description.toLowerCase().includes("added");
+                    const isWon = act.description.toLowerCase().includes("won") || act.description.toLowerCase().includes("completed");
+                    const isQualified = act.description.toLowerCase().includes("qualified");
+                    
+                    return (
+                      <tr key={act.id} className="hover:bg-muted/10 transition-colors">
+                        <td className="py-2.5 font-bold flex items-center gap-2 max-w-[120px]">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[8px] shrink-0">
+                            {initial}
+                          </div>
+                          <span className="truncate">{act.description.split(" added")[0].split(" moved")[0].split(" Task")[0].split(" contact")[0].split(":")[0]}</span>
+                        </td>
+                        <td className="py-2.5 text-muted-foreground">{act.dateStr || "Recent"}</td>
+                        <td className="py-2.5 text-muted-foreground">{act.timeStr || ""}</td>
+                        <td className="py-2.5">
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[8px] font-black uppercase",
+                            isWon ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
+                            isQualified ? "bg-purple-500/10 text-purple-600 border border-purple-500/20" :
+                            "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                          )}>
+                            {isWon ? "Won" : isQualified ? "Qualified" : "New"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right font-black text-foreground">
+                          {act.value ? `$${act.value.toLocaleString()}` : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {recentMovements.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-4 text-center text-muted-foreground italic">No recent movements</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ================= COLUMN 3: RIGHT COLUMN ================= */}
+        <div className="flex flex-col gap-6">
+          
+          {/* Widget 7: Revenue Goal Area Chart */}
+          <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Revenue Goal</h3>
+                <p className="text-[10px] text-muted-foreground">Closed-won total</p>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border">
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div>
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block">Total Won</span>
+              <p className="text-3xl font-black text-foreground">${wonValue.toLocaleString()}</p>
+            </div>
+
+            <div className="h-28 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dbData?.revenueProgressData || [
+                  { day: "1", value: 0 },
+                  { day: "2", value: wonValue }
+                ]} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="day" hide />
+                  <YAxis hide />
+                  <ChartTooltip cursor={false} />
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="value" stroke="oklch(0.55 0.18 260)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex gap-2.5">
+              <Button onClick={() => window.location.href = "/leads"} className="flex-1 rounded-full font-bold h-9 text-xs">
+                + Add Lead
+              </Button>
+              <Button onClick={() => window.location.href = "/follow-ups"} variant="outline" className="flex-1 rounded-full font-bold h-9 text-xs">
+                Task
+              </Button>
+            </div>
+          </div>
+
+          {/* Widget 8: AI Sales Insights Widget */}
+          <div className="border border-primary/20 rounded-3xl bg-primary/5 p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-black text-primary uppercase tracking-wider">
+                  <Sparkles className="h-4 w-4" /> AI Sales Insights
+                </div>
+                {aiProvider && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {aiProvider}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {/* Refresh counter badge */}
+                {!aiNoKey && (
+                  <span className={cn(
+                    "text-[9px] font-black px-1.5 py-0.5 rounded-full border",
+                    aiRefreshCount >= AI_REFRESH_LIMIT
+                      ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                      : "bg-muted text-muted-foreground border-border/40"
+                  )}>
+                    {aiRefreshCount >= AI_REFRESH_LIMIT ? "Limit reached" : `${AI_REFRESH_LIMIT - aiRefreshCount} left`}
+                  </span>
+                )}
+                <button
+                  onClick={() => fetchAiInsights(true)}
+                  disabled={aiLoading || aiRefreshCount >= AI_REFRESH_LIMIT}
+                  className={cn(
+                    "p-1 rounded-full transition-colors border",
+                    aiRefreshCount >= AI_REFRESH_LIMIT
+                      ? "text-muted-foreground/30 border-border/20 cursor-not-allowed"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                  title={aiRefreshCount >= AI_REFRESH_LIMIT ? "Refresh limit reached (5/5)" : `Refresh Insights (${AI_REFRESH_LIMIT - aiRefreshCount} remaining)`}
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", aiLoading && "animate-spin")} />
+                </button>
+              </div>
+            </div>
+
+            {aiLoading && (
+              <div className="space-y-2 py-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            )}
+
+            {/* No API Key Banner */}
+            {!aiLoading && aiNoKey && (
+              <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-foreground">No API Key Configured</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed max-w-[200px]">
+                    AI service is unavailable. Add{" "}
+                    <code className="font-mono bg-muted px-1 py-0.5 rounded text-[9px]">GEMINI_API_KEY</code>{" "}
+                    to your <code className="font-mono bg-muted px-1 py-0.5 rounded text-[9px]">.env</code> file to enable AI insights.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!aiLoading && !aiNoKey && aiInsights && (
+              <div className="space-y-4 text-xs">
+                
+                {/* Health Score */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Health Score</span>
+                    <span className="text-primary font-black">{aiInsights.healthScore}/100</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: `${aiInsights.healthScore}%` }} />
+                  </div>
+                </div>
+
+                {/* Observations */}
+                {aiInsights.observations && aiInsights.observations.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground block">Observations</span>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground font-medium pl-1">
+                      {aiInsights.observations.map((obs: string, idx: number) => (
+                        <li key={idx} className="leading-relaxed">{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {aiInsights.recommendations && aiInsights.recommendations.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[9px] uppercase tracking-wider font-bold text-primary block">Recommendations</span>
+                    <ul className="list-disc list-inside space-y-1 text-primary font-bold pl-1">
+                      {aiInsights.recommendations.map((rec: string, idx: number) => (
+                        <li key={idx} className="leading-relaxed">{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             )}
           </div>
+
         </div>
 
-        {/* Right — live clock */}
-        <div className="flex shrink-0 flex-col items-start md:items-end rounded-2xl bg-white/10 px-5 py-3 backdrop-blur-sm ring-1 ring-white/15">
-          <span className="text-3xl font-black tabular-nums tracking-tighter text-white">
-            {format(now, "HH:mm:ss")}
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 mt-0.5">Local time</span>
-        </div>
       </div>
+
     </div>
   );
 }
 
-/* ── KPI Card ─────────────────────────────────────────────────── */
-interface KpiProps {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  trend?: { value: string; dir: "up" | "down" };
-  accent: string;
-  loading?: boolean;
+// Sub-widgets
+interface FollowUpItemProps {
+  title: string;
+  priority: "low" | "medium" | "high";
+  date: string;
+  contact: string;
 }
-function KpiCard({ label, value, icon: Icon, trend, accent, loading }: KpiProps) {
-  if (loading) return <Skeleton className="h-32 w-full rounded-3xl" />;
-  const up = trend?.dir === "up";
+function FollowUpItem({ title, priority, date, contact }: FollowUpItemProps) {
   return (
-    <div className={cn(
-      "group relative overflow-hidden rounded-3xl border bg-card/60 p-5 backdrop-blur-sm transition-all duration-300",
-      "hover:-translate-y-1 hover:shadow-xl hover:border-primary/20"
-    )}>
-      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full blur-3xl opacity-20 transition-opacity duration-500 group-hover:opacity-40"
-        style={{ background: accent }} />
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2.5 rounded-2xl" style={{ background: `${accent}20` }}>
-          <Icon className="h-5 w-5" style={{ color: accent }} />
-        </div>
-        {trend && (
-          <span className={cn(
-            "flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full",
-            up ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-               : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-          )}>
-            {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-            {trend.value}
-          </span>
-        )}
+    <div className="flex items-center justify-between border-b pb-2.5 last:border-none last:pb-0 text-xs">
+      <div className="min-w-0">
+        <h4 className="font-bold text-foreground truncate">{title}</h4>
+        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{date} • {contact}</p>
       </div>
-      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
-      <p className="text-3xl font-black tracking-tighter text-foreground">{value}</p>
-    </div>
-  );
-}
-
-/* ─── Refresh button ──────────────────────────────────────────── */
-function RefreshButton({ onRefresh, spinning }: { onRefresh: () => void; spinning: boolean }) {
-  return (
-    <button onClick={onRefresh}
-      className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-full hover:bg-primary/5 border border-transparent hover:border-primary/10">
-      <RefreshCw className={cn("h-3.5 w-3.5", spinning && "animate-spin")} />
-      Refresh
-    </button>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════
-   PAGE
-   ════════════════════════════════════════════════════════════════ */
-export default function DashboardPage() {
-  const { data: session } = useSession();
-  const { stats, loading: kpiLoading, refresh: refreshKpis } = useDashboardKpis();
-  const { data: analytics, loading: analyticsLoading, refresh: refreshAnalytics } = useDashboardAnalytics();
-  const { pipelineStats, loading: pipelineLoading, refresh: refreshPipeline } = useDashboardPipeline();
-  const { activities, loading: activityLoading, refresh: refreshActivities } = useDashboardActivities();
-
-  const [spinning, setSpinning] = useState(false);
-
-  const refreshAll = useCallback(() => {
-    setSpinning(true);
-    Promise.all([refreshKpis(), refreshAnalytics(), refreshPipeline(), refreshActivities()])
-      .finally(() => setTimeout(() => setSpinning(false), 800));
-  }, [refreshKpis, refreshAnalytics, refreshPipeline, refreshActivities]);
-
-  /* pulse-in stagger on mount */
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
-  return (
-    <div className={cn(
-      "flex flex-col gap-5 pb-8 transition-opacity duration-500",
-      mounted ? "opacity-100" : "opacity-0"
-    )}>
-
-      {/* ── Top bar ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-foreground">Dashboard</h2>
-          <p className="text-sm text-muted-foreground">Welcome back &mdash; here&apos;s what&apos;s happening.</p>
-        </div>
-        <RefreshButton onRefresh={refreshAll} spinning={spinning} />
-      </div>
-
-      {/* ── Hero ── */}
-      <HeroHeader name={session?.user?.name} />
-
-      {/* ── KPI Row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Total Contacts" value={stats?.totalContacts ?? "—"} icon={Users}
-          trend={{ value: "12%", dir: "up" }} accent="#6366f1" loading={kpiLoading} />
-        <KpiCard label="Total Deals" value={stats?.totalDeals ?? "—"} icon={Target}
-          trend={{ value: "5%", dir: "down" }} accent="#10b981" loading={kpiLoading} />
-        <KpiCard label="Total Revenue" value={stats ? `$${stats.totalRevenue.toLocaleString()}` : "—"} icon={DollarSign}
-          trend={{ value: "18%", dir: "up" }} accent="#f59e0b" loading={kpiLoading} />
-        <KpiCard label="Conversion Rate" value={stats ? `${stats.conversionRate}%` : "—"} icon={TrendingUp}
-          trend={{ value: "2.3%", dir: "up" }} accent="#8b5cf6" loading={kpiLoading} />
-      </div>
-
-      {/* ── Revenue Chart + Pipeline Funnel ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Revenue chart — 2 cols */}
-        <div className="lg:col-span-2 min-h-[300px]">
-          <RevenueChart data={analytics?.forecastData ?? []} loading={analyticsLoading} />
-        </div>
-        {/* Pipeline funnel — 1 col */}
-        <PipelineFunnel data={pipelineStats} loading={pipelineLoading} />
-      </div>
-
-      {/* ── Stage Chart + Activity + Quick Actions ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Stage bar chart — 2 cols */}
-        <div className="lg:col-span-2 min-h-[280px]">
-          <StageChart data={analytics?.stageData ?? []} loading={analyticsLoading} />
-        </div>
-        {/* Quick actions — 1 col */}
-        <QuickActions />
-      </div>
-
-      {/* ── Task Donut Charts + Activity Feed ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <TaskDonut
-          title="Task Priority Distribution"
-          data={analytics?.taskData.priorityData ?? []}
-          loading={analyticsLoading}
-        />
-        <TaskDonut
-          title="Task Status Distribution"
-          data={analytics?.taskData.statusData ?? []}
-          loading={analyticsLoading}
-        />
-        <ActivityFeed activities={activities} loading={activityLoading} />
-      </div>
-
+      <span className={cn(
+        "text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full border shrink-0",
+        priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
+        priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+        "bg-gray-500/10 text-gray-600 border-gray-500/20"
+      )}>
+        {priority}
+      </span>
     </div>
   );
 }

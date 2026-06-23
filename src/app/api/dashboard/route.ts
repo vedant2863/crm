@@ -53,7 +53,7 @@ export async function GET() {
       Deal.find({ userId })
         .sort({ updatedAt: -1 })
         .limit(3)
-        .select('title stage updatedAt'),
+        .select('title stage value updatedAt'),
       Task.find({ userId })
         .sort({ updatedAt: -1 })
         .limit(3)
@@ -64,27 +64,42 @@ export async function GET() {
         .select('name company createdAt')
     ]);
 
-    // Format recent activities
-    const recentActivities = [
+    // Format recent activities using Date objects for sorting
+    const rawActivities = [
       ...recentContacts.map(contact => ({
         id: contact._id.toString(),
         type: "contact",
         description: `New contact added: ${contact.name}${contact.company ? ` from ${contact.company}` : ''}`,
-        timestamp: formatTimeAgo(contact.createdAt)
+        date: contact.createdAt,
+        value: 0
       })),
       ...recentDeals.map(deal => ({
         id: deal._id.toString(),
         type: "deal",
         description: `Deal "${deal.title}" moved to ${deal.stage}`,
-        timestamp: formatTimeAgo(deal.updatedAt || deal.createdAt)
+        date: deal.updatedAt || deal.createdAt,
+        value: deal.value
       })),
       ...recentTasks.map(task => ({
         id: task._id.toString(),
         type: "task",
         description: `Task "${task.title}" ${task.status === 'completed' ? 'completed' : 'updated'}`,
-        timestamp: formatTimeAgo(task.updatedAt || task.createdAt)
+        date: task.updatedAt || task.createdAt,
+        value: 0
       }))
-    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
+    ];
+
+    rawActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    const recentActivities = rawActivities.slice(0, 5).map(act => ({
+      id: act.id,
+      type: act.type,
+      description: act.description,
+      timestamp: formatTimeAgo(act.date),
+      dateStr: new Date(act.date).toLocaleDateString("en-US", { day: '2-digit', month: 'short', year: 'numeric' }),
+      timeStr: new Date(act.date).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }),
+      value: act.value
+    }));
 
     // Get task statistics
     const taskStats = await Task.aggregate([
@@ -107,6 +122,99 @@ export async function GET() {
       };
     });
 
+    // 1. Fetch upcoming uncompleted tasks as follow-ups
+    const upcomingTasks = await Task.find({
+      userId,
+      status: { $ne: "completed" }
+    })
+      .sort({ dueDate: 1 })
+      .limit(3)
+      .populate("contactId", "name")
+      .lean();
+
+    const upcomingFollowups = upcomingTasks.map((t: unknown) => {
+      const task = t as { _id: mongoose.Types.ObjectId; title: string; priority: string; dueDate?: Date; contactId?: { name?: string } };
+      return {
+        id: task._id.toString(),
+        title: task.title,
+        priority: task.priority,
+        date: task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-US", { day: '2-digit', month: 'short', year: 'numeric' }) : "No date",
+        contact: task.contactId?.name || "No contact"
+      };
+    });
+
+    // 2. Fetch monthly leads added in the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyEngagementAgg = await Deal.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          createdAt: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const engagementMap = new Map<string, number>();
+    for (let i = 0; i < 6; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 5 + i);
+      const key = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`;
+      engagementMap.set(key, 0);
+    }
+
+    monthlyEngagementAgg.forEach(item => {
+      const monthIdx = item._id.month - 1;
+      const yearShort = item._id.year.toString().substring(2);
+      const key = `${monthNames[monthIdx]} ${yearShort}`;
+      if (engagementMap.has(key)) {
+        engagementMap.set(key, item.count);
+      }
+    });
+
+    const monthlyEngagement = Array.from(engagementMap.entries()).map(([month, count]) => ({
+      month,
+      count
+    }));
+
+    // 3. Fetch cumulative revenue progress (won deals over time)
+    const wonDealsList = await Deal.find({
+      userId,
+      stage: "won"
+    })
+      .sort({ updatedAt: 1 })
+      .select("value updatedAt")
+      .lean();
+
+    let cumulativeRevenue = 0;
+    const revenueProgress = wonDealsList.map((item: unknown, index: number) => {
+      const deal = item as { value: number; updatedAt?: Date; createdAt: Date };
+      cumulativeRevenue += deal.value;
+      return {
+        day: (index + 1).toString(),
+        value: cumulativeRevenue,
+        date: new Date(deal.updatedAt || deal.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      };
+    });
+
+    const revenueProgressData = revenueProgress.length > 0 ? revenueProgress : [
+      { day: "1", value: 0, date: "No data" }
+    ];
+
     return NextResponse.json({
       dealStats,
       totalContacts,
@@ -116,6 +224,9 @@ export async function GET() {
       conversionRate: Math.round(conversionRate * 100) / 100,
       recentActivities,
       pipelineStats,
+      upcomingFollowups,
+      monthlyEngagement,
+      revenueProgressData,
       taskStats: taskStats.reduce((acc, stat) => {
         acc[stat._id] = stat.count;
         return acc;
@@ -143,10 +254,8 @@ function formatTimeAgo(date: Date): string {
 
 const DEAL_STAGES = [
   { key: "new", label: "New" },
-  { key: "contacted", label: "Contacted" },
   { key: "qualified", label: "Qualified" },
   { key: "proposal", label: "Proposal" },
-  { key: "negotiation", label: "Negotiation" },
   { key: "won", label: "Won" },
   { key: "lost", label: "Lost" }
 ];

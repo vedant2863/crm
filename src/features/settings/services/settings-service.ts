@@ -17,6 +17,11 @@ export interface ProfileUpdatePayload {
   timezone?: string;
   language?: string;
   notifications?: Record<string, boolean>;
+  security?: {
+    twoFactorAuth?: boolean;
+    sessionTimeout?: number;
+    loginHistory?: boolean;
+  };
 }
 
 /** Fetch user settings (no password) */
