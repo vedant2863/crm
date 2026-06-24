@@ -4,8 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
-import { getPreviousAiCall, hasAiQuota, logAiCall } from "@/lib/ai/rate-limit";
-import { mockSalesInsights } from "@/lib/ai/mock";
+import { getPreviousAiCall, hasAiQuota, logAiCall, getAiRemaining } from "@/lib/ai/rate-limit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,6 +19,8 @@ export async function GET(req: NextRequest) {
 
     await dbConnect();
 
+    const remaining = await getAiRemaining(session.user.id);
+
     // 1. Serve from DB cache if not a forced refresh
     if (!force) {
       const cachedResult = await getPreviousAiCall(session.user.id, key);
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
           aiError: false,
           provider: "Cached",
           isMock: false,
+          remaining,
         });
       }
     }
@@ -39,24 +41,23 @@ export async function GET(req: NextRequest) {
       title: string; value: number; stage: string; priority: string; company?: string;
     }[]).map(d => ({ title: d.title, value: d.value, stage: d.stage, priority: d.priority, company: d.company }));
 
-    // 2. Check rolling 24-hour quota — serve mock if exceeded
+    // 2. Check rolling 24-hour quota — return rate limit error if exceeded
     const allowed = await hasAiQuota(session.user.id);
     if (!allowed) {
       return NextResponse.json({
-        insights: mockSalesInsights(formattedDeals),
+        error: "Rolling 24-hour AI quota exceeded. Limit is 5 requests.",
         noApiKey: false,
-        aiError: false,
-        provider: "Mock (quota exceeded)",
-        isMock: true,
+        aiError: true,
+        isMock: false,
         quotaExceeded: true,
-      });
+        remaining: 0,
+      }, { status: 429 });
     }
 
     // 3. Call AI provider via dependency injection
     const aiService = new AIService(getAIProvider());
     let insights;
     let aiError = false;
-    let isMock = false;
 
     try {
       insights = await aiService.getSalesInsights(formattedDeals);
@@ -65,22 +66,45 @@ export async function GET(req: NextRequest) {
         await logAiCall(session.user.id, "sales-insights", key, insights);
       }
     } catch (err) {
-      console.error(`⚠️ [${aiService.providerName}] getSalesInsights failed — serving mock:`, err);
+      console.error(`⚠️ [${aiService.providerName}] getSalesInsights failed:`, err);
       aiError = true;
     }
 
-    // 4. Fall back to mock if provider failed or no key
-    if (!insights || insights.noApiKey || aiError) {
-      insights = mockSalesInsights(formattedDeals);
-      isMock = true;
+    // 4. Handle missing key or provider failures (no mock fallback)
+    if (aiError || !insights) {
+      return NextResponse.json({
+        error: "AI service failed or is temporarily unavailable.",
+        noApiKey: false,
+        aiError: true,
+        insights: null,
+        provider: aiService.providerName,
+        isMock: false,
+        remaining,
+      }, { status: 500 });
     }
+
+    if (insights.noApiKey) {
+      return NextResponse.json({
+        error: "No AI API key configured.",
+        noApiKey: true,
+        aiError: false,
+        insights: null,
+        provider: aiService.providerName,
+        isMock: false,
+        remaining,
+      }, { status: 200 });
+    }
+
+    // Get updated remaining count after logging the call
+    const updatedRemaining = await getAiRemaining(session.user.id);
 
     return NextResponse.json({
       insights,
       noApiKey: false,
-      aiError,
-      provider: isMock ? "Mock (AI unavailable)" : aiService.providerName,
-      isMock,
+      aiError: false,
+      provider: aiService.providerName,
+      isMock: false,
+      remaining: updatedRemaining,
     });
   } catch (error) {
     console.error("Error in AI Sales Insights route:", error);

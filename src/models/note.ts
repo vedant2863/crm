@@ -5,7 +5,7 @@ export interface INote extends Document {
   content: string;
   pinned: boolean;
   dealId?: mongoose.Types.ObjectId; // Linked to lead/deal
-  userId: mongoose.Types.ObjectId;  // Scoped to user (multi-tenant)
+  userId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,7 +16,11 @@ const noteSchema = new Schema<INote>(
     content: { type: String, required: true },
     pinned: { type: Boolean, default: false },
     dealId: { type: Schema.Types.ObjectId, ref: "Deal" },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
   },
   {
     timestamps: true,

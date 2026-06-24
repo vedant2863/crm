@@ -4,9 +4,9 @@
  * Pure DB layer for authentication.
  * No Next.js imports — fully framework-independent.
  */
-import dbConnect from "@/lib/dbConnect";
-import User from "@/models/user";
 import bcrypt from "bcryptjs";
+import User from "@/models/user";
+import dbConnect from "@/lib/dbConnect";
 
 export interface CreateUserPayload {
   name: string;
@@ -27,15 +27,15 @@ export interface UserPublic {
  */
 export async function createUser(payload: CreateUserPayload): Promise<UserPublic> {
   await dbConnect();
-
-  const existing = await User.findOne({ email: payload.email });
-  if (existing) throw new Error("EMAIL_TAKEN");
+  const existingUser = await User.findOne({ email: payload.email.toLowerCase() });
+  if (existingUser) {
+    throw new Error("EMAIL_TAKEN");
+  }
 
   const hashedPassword = await bcrypt.hash(payload.password, 12);
-
   const user = await User.create({
     name: payload.name,
-    email: payload.email,
+    email: payload.email.toLowerCase(),
     password: hashedPassword,
     role: "user",
   });
@@ -44,6 +44,6 @@ export async function createUser(payload: CreateUserPayload): Promise<UserPublic
     id: user._id.toString(),
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: user.role || "user",
   };
 }

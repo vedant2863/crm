@@ -26,7 +26,7 @@ export async function GET() {
 
     // Get deal statistics
     const dealStats = await Deal.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: { userId: String(userId) } },
       {
         $group: {
           _id: "$stage",
@@ -102,7 +102,7 @@ export async function GET() {
 
     // Get task statistics
     const taskStats = await Task.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: { userId: String(userId) } },
       {
         $group: {
           _id: "$status",
@@ -151,7 +151,7 @@ export async function GET() {
     const monthlyEngagementAgg = await Deal.aggregate([
       {
         $match: {
-          userId: new mongoose.Types.ObjectId(userId),
+          userId: String(userId),
           createdAt: { $gte: sixMonthsAgo }
         }
       },

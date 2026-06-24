@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/auth/auth";
+import { getToken } from "next-auth/jwt";
 
 /**
  * Paths that are always accessible without a session.
@@ -10,7 +10,7 @@ const PUBLIC_PATHS = ["/", "/login", "/register"];
  * Path prefixes that bypass middleware entirely.
  */
 const ALWAYS_ALLOWED_PREFIXES = [
-  "/api/auth",   // Better Auth API route handler endpoints
+  "/api/auth",   // NextAuth API route handler endpoints
   "/api/seed",   // Seeding endpoint (dev only)
   "/_next",      // Next.js build assets
   "/favicon.ico",
@@ -31,11 +31,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Retrieve Better Auth session
-  const session = await getServerSession();
+  // 3. Retrieve NextAuth session token
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
   // 4. Redirect unauthenticated users to /login
-  if (!session) {
+  if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

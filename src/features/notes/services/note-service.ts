@@ -12,7 +12,7 @@ interface GetNotesParams {
 export async function getNotes({ userId, search, dealId }: GetNotesParams) {
   await dbConnect();
 
-  const query: any = { userId: new mongoose.Types.ObjectId(userId) };
+  const query: any = { userId };
 
   if (dealId) {
     query.dealId = new mongoose.Types.ObjectId(dealId);
@@ -37,7 +37,7 @@ export async function createNote(userId: string, data: Partial<INote>) {
   await dbConnect();
   const note = new Note({
     ...data,
-    userId: new mongoose.Types.ObjectId(userId),
+    userId,
     dealId: data.dealId ? new mongoose.Types.ObjectId(data.dealId as any) : undefined,
   });
   await note.save();
@@ -46,7 +46,7 @@ export async function createNote(userId: string, data: Partial<INote>) {
 
 export async function updateNote(noteId: string, userId: string, data: Partial<INote>) {
   await dbConnect();
-  const query = { _id: noteId, userId: new mongoose.Types.ObjectId(userId) };
+  const query = { _id: noteId, userId };
   
   const updateData = { ...data };
   if (data.dealId) {
@@ -65,7 +65,7 @@ export async function updateNote(noteId: string, userId: string, data: Partial<I
 
 export async function deleteNote(noteId: string, userId: string) {
   await dbConnect();
-  const query = { _id: noteId, userId: new mongoose.Types.ObjectId(userId) };
+  const query = { _id: noteId, userId };
   const result = await Note.deleteOne(query);
   if (result.deletedCount === 0) {
     throw new Error("NOT_FOUND");

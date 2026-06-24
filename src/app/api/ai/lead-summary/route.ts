@@ -5,7 +5,6 @@ import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
 import { getPreviousAiCall, hasAiQuota, logAiCall } from "@/lib/ai/rate-limit";
-import { mockLeadSummary } from "@/lib/ai/mock";
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,24 +52,18 @@ export async function POST(req: NextRequest) {
       contactName: deal.contactName,
     };
 
-    // 3. Check rolling 24-hour quota — serve mock if exceeded
+    // 3. Check rolling 24-hour quota — return rate limit error if exceeded
     const allowed = await hasAiQuota(session.user.id);
     if (!allowed) {
       return NextResponse.json({
-        summary: mockLeadSummary(leadInput),
-        noApiKey: false,
-        aiError: false,
-        provider: "Mock (quota exceeded)",
-        isMock: true,
-        quotaExceeded: true,
-      });
+        error: "Rolling 24-hour AI quota exceeded. Limit is 5 requests."
+      }, { status: 429 });
     }
 
     // 4. Call AI provider via dependency injection
     const aiService = new AIService(getAIProvider());
     let summary;
     let aiError = false;
-    let isMock = false;
 
     try {
       summary = await aiService.getLeadSummary(leadInput);
@@ -79,22 +72,29 @@ export async function POST(req: NextRequest) {
         await logAiCall(session.user.id, "lead-summary", key, summary);
       }
     } catch (err) {
-      console.error(`⚠️ [${aiService.providerName}] getLeadSummary failed — serving mock:`, err);
+      console.error(`⚠️ [${aiService.providerName}] getLeadSummary failed:`, err);
       aiError = true;
     }
 
-    // 5. Fall back to mock if provider failed or no key
-    if (!summary || summary.noApiKey || aiError) {
-      summary = mockLeadSummary(leadInput);
-      isMock = true;
+    // 5. Handle missing key or provider failures (no mock fallback)
+    if (aiError || !summary) {
+      return NextResponse.json({
+        error: "AI service failed or is temporarily unavailable."
+      }, { status: 500 });
+    }
+
+    if (summary.noApiKey) {
+      return NextResponse.json({
+        error: "No AI API key configured. Please set GEMINI_API_KEY in your .env file."
+      }, { status: 400 });
     }
 
     return NextResponse.json({
       summary,
       noApiKey: false,
-      aiError,
-      provider: isMock ? "Mock (AI unavailable)" : aiService.providerName,
-      isMock,
+      aiError: false,
+      provider: aiService.providerName,
+      isMock: false,
     });
   } catch (error) {
     console.error("Error in AI Lead Summary route:", error);

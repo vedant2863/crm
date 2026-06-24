@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-const SessionProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+import { SessionProvider } from "next-auth/react";
 import { SidebarProvider } from "./ui/sidebar";
 import { Toaster } from "react-hot-toast";
 

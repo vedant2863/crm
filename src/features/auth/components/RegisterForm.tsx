@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { registerUser } from "@/lib/auth/session";
 
 export default function RegisterForm() {
   const [name, setName] = useState("");
@@ -31,17 +32,16 @@ export default function RegisterForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const res = await registerUser({
+        email,
+        password,
+        name,
       });
 
-      if (res.ok) {
-        router.push("/login?registered=true");
+      if (!res) {
+        setError("Something went wrong");
       } else {
-        const data = await res.json();
-        setError(data.error || "Something went wrong");
+        router.push("/login?registered=true");
       }
     } catch {
       setError("An unexpected error occurred");

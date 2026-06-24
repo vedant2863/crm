@@ -9,7 +9,7 @@ export interface ITask extends Document {
   assignedTo?: mongoose.Types.ObjectId;
   contactId?: mongoose.Types.ObjectId;
   dealId?: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  userId: string;
   tags?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -33,7 +33,11 @@ const taskSchema = new Schema(
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
     contactId: { type: Schema.Types.ObjectId, ref: "Contact" },
     dealId: { type: Schema.Types.ObjectId, ref: "Deal" },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     tags: [{ type: String }],
   },
   {

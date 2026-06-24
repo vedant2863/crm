@@ -3,8 +3,8 @@
  * @description AI Provider wrapper that runs Gemini as the primary provider and falls back to Groq if rate limits or network issues arise.
  */
 
-import { GeminiProvider } from "./gemini";
-import { GroqProvider } from "./groq";
+import { GeminiProvider } from "./models/gemini";
+import { GroqProvider } from "./models/groq";
 import type {
   AIProvider,
   LeadInput,

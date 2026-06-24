@@ -1,41 +1,31 @@
-import { createAuthClient } from "better-auth/react";
-import { inferAdditionalFields } from "better-auth/client/plugins";
-
-export const authClient = createAuthClient({
-  plugins: [
-    inferAdditionalFields({
-      user: {
-        role: { type: "string" },
-      },
-    }),
-  ],
-});
+import { 
+  useSession as nextAuthUseSession, 
+  signIn as nextAuthSignIn, 
+  signOut as nextAuthSignOut 
+} from "next-auth/react";
 
 // Custom useSession Hook mimicking next-auth/react
 export function useSession() {
-  const session = authClient.useSession();
-  
+  const { data: session, status } = nextAuthUseSession();
+
   return {
-    data: session.data ? {
+    data: session ? {
       user: {
-        id: session.data.user.id,
-        name: session.data.user.name,
-        email: session.data.user.email,
-        role: session.data.user.role as string,
+        id: (session.user as { id?: string }).id || "",
+        name: session.user.name || "",
+        email: session.user.email || "",
+        role: (session.user as { role?: string }).role || "user",
       },
-      expires: session.data.session.expiresAt.toISOString(),
-      accessToken: undefined as string | undefined,
+      expires: session.expires,
+      accessToken: undefined,
     } : null,
-    status: (session.isPending ? "loading" : session.data ? "authenticated" : "unauthenticated") as "loading" | "authenticated" | "unauthenticated",
+    status,
   };
 }
 
 // Custom signOut
 export async function signOut(options?: { callbackUrl?: string }) {
-  await authClient.signOut();
-  if (options?.callbackUrl) {
-    window.location.href = options.callbackUrl;
-  }
+  await nextAuthSignOut({ callbackUrl: options?.callbackUrl });
 }
 
 // Custom signIn mimicking next-auth credentials signIn
@@ -43,17 +33,22 @@ export async function signIn(provider: string, options?: Record<string, unknown>
   if (provider === "credentials") {
     const { email, password, redirect = true, callbackUrl = "/dashboard" } = (options || {}) as Record<string, unknown>;
     try {
-      const res = await authClient.signIn.email({
+      const res = await nextAuthSignIn("credentials", {
         email: email as string,
         password: password as string,
+        redirect: false,
+        callbackUrl: callbackUrl as string,
       });
-      if (res.error) {
-        return { error: res.error.message || "Failed to sign in" };
+
+      if (res?.error) {
+        return { error: res.error };
       }
-      if (redirect) {
-        window.location.href = callbackUrl as string;
+
+      if (redirect && res?.url) {
+        window.location.href = res.url;
       }
-      return { error: null, url: callbackUrl as string };
+
+      return { error: null, url: res?.url || (callbackUrl as string) };
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : "An error occurred";
       return { error: errMsg };

@@ -30,6 +30,19 @@ export async function hasAiQuota(userId: string): Promise<boolean> {
 }
 
 /**
+ * Gets the remaining AI calls for a user in the rolling 24-hour window.
+ */
+export async function getAiRemaining(userId: string): Promise<number> {
+  await dbConnect();
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const count = await AiCallLog.countDocuments({
+    userId,
+    createdAt: { $gte: oneDayAgo },
+  });
+  return Math.max(0, 5 - count);
+}
+
+/**
  * Logs a new AI call along with its result and lookup key.
  */
 export async function logAiCall(userId: string, action: string, key: string, result: unknown): Promise<void> {

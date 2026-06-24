@@ -4,8 +4,8 @@
  */
 
 import { Groq } from "groq-sdk";
-import { fromCache, toCache } from "./provider";
-import { AI_CONFIG } from "./config";
+import { fromCache, toCache } from "../provider";
+import { AI_CONFIG } from "../config";
 import {
   LEAD_SUMMARY_SYSTEM,
   getLeadSummaryUserPrompt,
@@ -13,7 +13,7 @@ import {
   getEmailGeneratorUserPrompt,
   SALES_INSIGHTS_SYSTEM,
   getSalesInsightsUserPrompt,
-} from "./prompts";
+} from "../prompts";
 import type {
   AIProvider,
   LeadInput,
@@ -22,7 +22,7 @@ import type {
   AILeadSummaryResult,
   AIEmailResult,
   AISalesInsightsResult,
-} from "./provider";
+} from "../provider";
 
 export class GroqProvider implements AIProvider {
   readonly name = "Groq";

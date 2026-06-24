@@ -5,18 +5,18 @@ export interface IDeal extends Document {
   description?: string;
   value: number;
   stage:
-    | "new"
-    | "qualified"
-    | "proposal"
-    | "won"
-    | "lost";
+  | "new"
+  | "qualified"
+  | "proposal"
+  | "won"
+  | "lost";
   probability?: number;
   expectedCloseDate?: Date;
   contactName?: string;
   company?: string;
   assignedTo?: string;
   contactId?: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  userId: string;
   priority: "low" | "medium" | "high";
   tags?: string[];
   notes?: string;
@@ -47,7 +47,11 @@ const dealSchema = new Schema<IDeal>(
     company: { type: String },
     assignedTo: { type: String },
     contactId: { type: Schema.Types.ObjectId, ref: "Contact" },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     priority: {
       type: String,
       enum: ["low", "medium", "high"],

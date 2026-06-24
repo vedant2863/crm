@@ -2,21 +2,13 @@ import { NextResponse } from "next/server";
 import { seedDatabase } from "@/lib/seedData";
 
 export async function POST() {
-  // Only allow seeding in development
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json(
-      { error: "Seeding is not allowed in production" },
-      { status: 403 }
-    );
-  }
-
   try {
     const result = await seedDatabase();
 
     return NextResponse.json({
       message: "Database seeded successfully",
       data: {
-        users: result.users.length,
+        users: result.userId ? 1 : 0,
         contacts: result.contacts.length,
         deals: result.deals.length,
         tasks: result.tasks.length
@@ -35,6 +27,6 @@ export async function POST() {
 export async function GET() {
   return NextResponse.json({
     message: "Seed endpoint is available. Use POST to seed the database.",
-    note: "Only available in development mode"
+    note: "Safe to run in both development and production (targets only admin user data)"
   });
 }

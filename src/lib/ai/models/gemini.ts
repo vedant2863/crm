@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GoogleGenAI } from "@google/genai";
-import { fromCache, toCache } from "./provider";
-import { AI_CONFIG } from "./config";
+import { fromCache, toCache } from "../provider";
+import { AI_CONFIG } from "../config";
 import {
   LEAD_SUMMARY_SYSTEM,
   getLeadSummaryUserPrompt,
@@ -14,12 +14,12 @@ import {
   getEmailGeneratorUserPrompt,
   SALES_INSIGHTS_SYSTEM,
   getSalesInsightsUserPrompt,
-} from "./prompts";
+} from "../prompts";
 import {
   LEAD_SUMMARY_SCHEMA,
   EMAIL_GENERATOR_SCHEMA,
   SALES_INSIGHTS_SCHEMA,
-} from "./schemas";
+} from "../schemas";
 import type {
   AIProvider,
   LeadInput,
@@ -28,7 +28,7 @@ import type {
   AILeadSummaryResult,
   AIEmailResult,
   AISalesInsightsResult,
-} from "./provider";
+} from "../provider";
 
 export class GeminiProvider implements AIProvider {
   readonly name = "Gemini";

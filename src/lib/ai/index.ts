@@ -13,8 +13,8 @@
  *   AI_PROVIDER=groq     →  GroqProvider    (needs GROQ_API_KEY)
  */
 
-import { GeminiProvider } from "./gemini";
-import { GroqProvider } from "./groq";
+import { GeminiProvider } from "./models/gemini";
+import { GroqProvider } from "./models/groq";
 import { FallbackProvider } from "./fallback";
 import type { AIProvider } from "./provider";
 

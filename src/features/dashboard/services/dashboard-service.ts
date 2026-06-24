@@ -10,7 +10,6 @@ import Deal from "@/models/deal";
 import Task from "@/models/task";
 import User from "@/models/user";
 import Activity from "@/models/activity";
-import mongoose from "mongoose";
 
 const DEAL_STAGES = [
   { key: "new", label: "New" },
@@ -29,11 +28,11 @@ function formatTimeAgo(date: Date): string {
 }
 
 /** Get list of user IDs in the same company/organization */
-async function getOrganizationUserIds(userId: string): Promise<mongoose.Types.ObjectId[]> {
+async function getOrganizationUserIds(userId: string): Promise<string[]> {
   const user = await User.findById(userId);
-  if (!user || !user.company) return [new mongoose.Types.ObjectId(userId)];
+  if (!user || !user.company) return [userId];
   const usersInCompany = await User.find({ company: user.company }).select("_id");
-  return usersInCompany.map((u) => u._id);
+  return usersInCompany.map((u) => u._id.toString());
 }
 
 /** KPIs: totalContacts, totalDeals, totalRevenue, conversionRate scoped to Org */
