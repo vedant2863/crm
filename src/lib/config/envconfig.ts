@@ -18,12 +18,6 @@ const envConfig = {
   /** JWT signing secret for NextAuth sessions */
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "",
 
-  // ─── Better Auth ───────────────────────────────────────────────────────────
-  /** Better Auth secret key */
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || "",
-  /** Better Auth base URL */
-  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-
   // ─── AI Provider Selection ─────────────────────────────────────────────────
   /**
    * Active AI provider:
