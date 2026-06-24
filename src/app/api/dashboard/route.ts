@@ -1,15 +1,14 @@
-import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "@/lib/auth/auth";
 import dbConnect from "@/lib/dbConnect";
 import Contact from "@/models/contact";
 import Deal from "@/models/deal";
 import Task from "@/models/task";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

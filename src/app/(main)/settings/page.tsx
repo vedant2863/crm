@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth/auth-client";
 import { User as UserIcon, Bell, Shield, Database } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -233,7 +233,6 @@ export default function SettingsPage() {
 
               <TabsContent value="data" className="mt-0 focus-visible:ring-0">
                 <DataTab
-                  onExport={() => toast("Exporting data...")}
                   onImport={() => toast("Import feature coming soon")}
                   onDeleteAccount={() => toast.error("Please contact support to delete account")}
                 />

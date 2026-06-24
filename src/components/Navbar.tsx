@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut, User, Sun, Moon, LayoutDashboard, Briefcase, Layers, Users, CheckCircle2, StickyNote } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "@/lib/auth/auth-client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";

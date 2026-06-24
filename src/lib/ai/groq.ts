@@ -110,14 +110,12 @@ export class GroqProvider implements AIProvider {
     return result;
   }
 
+  /**
+   * Availability is determined by whether a key is configured.
+   * A live models.list() call is intentionally avoided — it consumes quota
+   * and can throw before any generation even begins.
+   */
   async isAvailable(): Promise<boolean> {
-    if (!this.hasKey || !this.client) return false;
-    try {
-      await this.client.models.list();
-      return true;
-    } catch (err) {
-      console.error("❌ Groq API check failed:", err);
-      return false;
-    }
+    return this.hasKey && this.client !== null;
   }
 }

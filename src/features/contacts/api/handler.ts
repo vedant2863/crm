@@ -4,8 +4,7 @@
  * HTTP Translation Layer for contacts.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "@/lib/auth/auth";
 import {
   getContacts,
   createContact,
@@ -14,7 +13,7 @@ import {
 } from "../services/contact-service";
 
 async function requireAuth() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
   return session.user.id;
 }

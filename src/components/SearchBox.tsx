@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Users, Target, CheckCircle2, Loader2, Sparkles, Settings, ArrowRight } from "lucide-react";
-import { useSearch, SearchResult } from "@/features/search/hooks/useSearch";
+import { useSearch } from "@/features/search/hooks/useSearch";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";

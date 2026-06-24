@@ -1,11 +1,11 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { 
-  Plus, Sparkles, RefreshCw, Layers, Calendar, 
-  ArrowUpRight, ArrowUp, CheckCircle2, AlertCircle, 
+import { useSession } from "@/lib/auth/auth-client";
+import {
+  Plus, Sparkles, RefreshCw, Layers, Calendar,
+  ArrowUpRight, ArrowUp, CheckCircle2, AlertCircle,
   TrendingUp, CircleDollarSign, Target, User, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ const MONTHLY_ENGAGEMENT = [
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
-  
+
   // Dashboard Aggregation States
   const [dbData, setDbData] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState(true);
@@ -156,10 +156,11 @@ export default function DashboardPage() {
     );
   }
 
-  // Calculate Metrics
-  const pipelineValue = dbData?.pipelineStats?.reduce((sum: number, stage: any) => sum + stage.value, 0) || 0;
+  // Calculate Metrics — guard all values against NaN/undefined for empty DB state
+  const pipelineValue = dbData?.pipelineStats?.reduce((sum: number, stage: any) => sum + (stage.value || 0), 0) || 0;
   const wonValue = dbData?.totalRevenue || 0;
-  const conversionPercent = dbData?.conversionRate || 0;
+  const rawConversion = dbData?.conversionRate ?? 0;
+  const conversionPercent = isNaN(rawConversion) ? 0 : Math.min(100, Math.max(0, rawConversion));
   const totalLeads = dbData?.totalDeals || 0;
   const pendingTasks = dbData?.totalTasks || 0;
 
@@ -168,7 +169,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-      
+
       {/* Top Welcome Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -181,7 +182,7 @@ export default function DashboardPage() {
           <div className="flex items-center border rounded-full px-4 py-2 bg-card text-xs font-bold text-muted-foreground shadow-sm">
             <Calendar className="h-3.5 w-3.5 mr-2" /> 01 Jan - 21 Jun, 2026
           </div>
-          <Button 
+          <Button
             onClick={handleRefreshAll}
             variant="outline"
             size="icon"
@@ -195,15 +196,15 @@ export default function DashboardPage() {
 
       {/* Main Grid Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
+
         {/* ================= COLUMN 1: WIDGETS ================= */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Widget 1: Pipeline Goal Card */}
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl p-6 shadow-xl shadow-blue-500/10 flex flex-col gap-6 relative overflow-hidden h-[210px] justify-between">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
             <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white/5 rounded-full blur-xl" />
-            
+
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">Pipeline Goal</span>
@@ -290,7 +291,7 @@ export default function DashboardPage() {
 
         {/* ================= COLUMN 2: MIDDLE COLUMN ================= */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Widget 5: Pipeline Engagement Bar Chart */}
           <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -299,14 +300,14 @@ export default function DashboardPage() {
                 <p className="text-[10px] text-muted-foreground">New leads per month</p>
               </div>
               <div className="flex border rounded-full p-1 bg-muted/30 shrink-0 text-xs">
-                <button 
-                  onClick={() => setEngagementPeriod("Monthly")} 
+                <button
+                  onClick={() => setEngagementPeriod("Monthly")}
                   className={cn("px-3 py-1 rounded-full font-bold", engagementPeriod === "Monthly" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
                 >
                   Monthly
                 </button>
-                <button 
-                  onClick={() => setEngagementPeriod("Annually")} 
+                <button
+                  onClick={() => setEngagementPeriod("Annually")}
                   className={cn("px-3 py-1 rounded-full font-bold", engagementPeriod === "Annually" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
                 >
                   Annually
@@ -319,7 +320,7 @@ export default function DashboardPage() {
               <div className="absolute top-2 right-12 z-10 bg-blue-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-blue-400/20 shadow-md">
                 +28.6%
               </div>
-              
+
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dbData?.monthlyEngagement || MONTHLY_ENGAGEMENT} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: "bold" }} />
@@ -359,7 +360,7 @@ export default function DashboardPage() {
                     const isNew = act.description.toLowerCase().includes("added");
                     const isWon = act.description.toLowerCase().includes("won") || act.description.toLowerCase().includes("completed");
                     const isQualified = act.description.toLowerCase().includes("qualified");
-                    
+
                     return (
                       <tr key={act.id} className="hover:bg-muted/10 transition-colors">
                         <td className="py-2.5 font-bold flex items-center gap-2 max-w-[120px]">
@@ -374,8 +375,8 @@ export default function DashboardPage() {
                           <span className={cn(
                             "px-2 py-0.5 rounded-full text-[8px] font-black uppercase",
                             isWon ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
-                            isQualified ? "bg-purple-500/10 text-purple-600 border border-purple-500/20" :
-                            "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                              isQualified ? "bg-purple-500/10 text-purple-600 border border-purple-500/20" :
+                                "bg-blue-500/10 text-blue-600 border border-blue-500/20"
                           )}>
                             {isWon ? "Won" : isQualified ? "Qualified" : "New"}
                           </span>
@@ -400,7 +401,7 @@ export default function DashboardPage() {
 
         {/* ================= COLUMN 3: RIGHT COLUMN ================= */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Widget 7: Revenue Goal Area Chart */}
           <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -412,7 +413,7 @@ export default function DashboardPage() {
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
             </div>
-            
+
             <div>
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block">Total Won</span>
               <p className="text-3xl font-black text-foreground">${wonValue.toLocaleString()}</p>
@@ -420,17 +421,24 @@ export default function DashboardPage() {
 
             <div className="h-28 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dbData?.revenueProgressData || [
-                  { day: "1", value: 0 },
-                  { day: "2", value: wonValue }
-                ]} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <AreaChart
+                  data={
+                    dbData?.revenueProgressData?.length > 0
+                      ? dbData.revenueProgressData
+                      : [
+                        { day: "Start", value: 0, date: "No data" },
+                        { day: "Now", value: 0, date: "No data" },
+                      ]
+                  }
+                  margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
+                >
                   <XAxis dataKey="day" hide />
                   <YAxis hide />
                   <ChartTooltip cursor={false} />
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <Area type="monotone" dataKey="value" stroke="oklch(0.55 0.18 260)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" />
@@ -516,7 +524,7 @@ export default function DashboardPage() {
 
             {!aiLoading && !aiNoKey && aiInsights && (
               <div className="space-y-4 text-xs">
-                
+
                 {/* Health Score */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center font-bold">
@@ -580,8 +588,8 @@ function FollowUpItem({ title, priority, date, contact }: FollowUpItemProps) {
       <span className={cn(
         "text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full border shrink-0",
         priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-        priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-        "bg-gray-500/10 text-gray-600 border-gray-500/20"
+          priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+            "bg-gray-500/10 text-gray-600 border-gray-500/20"
       )}>
         {priority}
       </span>

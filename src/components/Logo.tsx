@@ -1,6 +1,6 @@
 'use client'
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth/auth-client";
 
 export default function Logo() {
   const { data: session } = useSession();

@@ -1,12 +1,12 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { 
+import { useSession } from "@/lib/auth/auth-client";
+import {
   Plus, CheckCircle2, AlertCircle, Calendar, Clock,
-  ChevronDown, AlertTriangle, ArrowUpRight, Search, 
-  Trash2, Edit, Check 
+  ChevronDown, AlertTriangle, ArrowUpRight, Search,
+  Trash2, Edit, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -166,7 +166,7 @@ export default function FollowUpsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -185,8 +185,8 @@ export default function FollowUpsPage() {
           <span className="text-primary font-black">{progressPercent}% ({completedCount} of {totalCount} completed)</span>
         </div>
         <div className="w-full bg-muted rounded-full h-3.5 overflow-hidden">
-          <div 
-            className="bg-primary h-full rounded-full transition-all duration-500" 
+          <div
+            className="bg-primary h-full rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -214,11 +214,11 @@ export default function FollowUpsPage() {
             </h2>
             <div className="flex flex-col gap-3">
               {overdueList.map(task => (
-                <FollowUpCard 
-                  key={task._id} 
-                  task={task} 
-                  onToggleStatus={handleToggleStatus} 
-                  onEdit={handleOpenDialog} 
+                <FollowUpCard
+                  key={task._id}
+                  task={task}
+                  onToggleStatus={handleToggleStatus}
+                  onEdit={handleOpenDialog}
                   onDelete={handleDelete}
                   badgeStyle="bg-rose-500/10 text-rose-600 border-rose-500/20"
                 />
@@ -235,11 +235,11 @@ export default function FollowUpsPage() {
             </h2>
             <div className="flex flex-col gap-3">
               {todayList.map(task => (
-                <FollowUpCard 
-                  key={task._id} 
-                  task={task} 
-                  onToggleStatus={handleToggleStatus} 
-                  onEdit={handleOpenDialog} 
+                <FollowUpCard
+                  key={task._id}
+                  task={task}
+                  onToggleStatus={handleToggleStatus}
+                  onEdit={handleOpenDialog}
                   onDelete={handleDelete}
                   badgeStyle="bg-amber-500/10 text-amber-600 border-amber-500/20"
                 />
@@ -255,11 +255,11 @@ export default function FollowUpsPage() {
           </h2>
           <div className="flex flex-col gap-3">
             {upcomingList.map(task => (
-              <FollowUpCard 
-                key={task._id} 
-                task={task} 
-                onToggleStatus={handleToggleStatus} 
-                onEdit={handleOpenDialog} 
+              <FollowUpCard
+                key={task._id}
+                task={task}
+                onToggleStatus={handleToggleStatus}
+                onEdit={handleOpenDialog}
                 onDelete={handleDelete}
                 badgeStyle="bg-blue-500/10 text-blue-600 border-blue-500/20"
               />
@@ -281,11 +281,11 @@ export default function FollowUpsPage() {
             </h2>
             <div className="flex flex-col gap-3 opacity-60">
               {completedList.map(task => (
-                <FollowUpCard 
-                  key={task._id} 
-                  task={task} 
-                  onToggleStatus={handleToggleStatus} 
-                  onEdit={handleOpenDialog} 
+                <FollowUpCard
+                  key={task._id}
+                  task={task}
+                  onToggleStatus={handleToggleStatus}
+                  onEdit={handleOpenDialog}
                   onDelete={handleDelete}
                   badgeStyle="bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                 />
@@ -315,16 +315,16 @@ interface FollowUpCardProps {
 
 function FollowUpCard({ task, onToggleStatus, onEdit, onDelete, badgeStyle }: FollowUpCardProps) {
   const isCompleted = task.status === "completed" || task.status === "cancelled";
-  
+
   return (
     <div className="group relative bg-card border rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 flex items-center gap-4">
       {/* Checkbox button */}
-      <button 
+      <button
         onClick={() => onToggleStatus(task._id)}
         className={cn(
           "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
-          isCompleted 
-            ? "bg-emerald-500 border-emerald-500 text-white" 
+          isCompleted
+            ? "bg-emerald-500 border-emerald-500 text-white"
             : "border-muted-foreground/30 hover:border-primary hover:bg-primary/5 text-transparent"
         )}
       >
@@ -357,8 +357,8 @@ function FollowUpCard({ task, onToggleStatus, onEdit, onDelete, badgeStyle }: Fo
         <span className={cn(
           "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
           task.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-          task.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-          "bg-gray-500/10 text-gray-600 border-gray-500/20"
+            task.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+              "bg-gray-500/10 text-gray-600 border-gray-500/20"
         )}>
           {task.priority}
         </span>

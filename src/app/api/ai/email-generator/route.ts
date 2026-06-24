@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "@/lib/auth/auth";
 import dbConnect from "@/lib/dbConnect";
 import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
-
 import { getPreviousAiCall, hasAiQuota, logAiCall } from "@/lib/ai/rate-limit";
+import { mockEmail } from "@/lib/ai/mock";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { dealId, purpose, tone, force } = body;
+    const { dealId, purpose, tone, force } = await req.json();
     if (!dealId || !purpose || !tone) {
       return NextResponse.json({ error: "dealId, purpose, and tone are required" }, { status: 400 });
     }
@@ -25,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    // 1. Try to serve from database cache if not forced
+    // 1. Serve from DB cache if not forced
     if (force !== true) {
       const cachedResult = await getPreviousAiCall(session.user.id, key);
       if (cachedResult) {
@@ -34,6 +32,7 @@ export async function POST(req: NextRequest) {
           noApiKey: false,
           aiError: false,
           provider: "Cached",
+          isMock: false,
         });
       }
     }
@@ -44,40 +43,54 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    // 3. Check rolling 24-hour rate limit
+    const emailInput = {
+      contactName: deal.contactName,
+      company: deal.company,
+      title: deal.title,
+    };
+
+    // 3. Check rolling 24-hour quota — serve mock if exceeded
     const allowed = await hasAiQuota(session.user.id);
     if (!allowed) {
-      return NextResponse.json(
-        { error: "Daily quota exceeded. You can only make 5 AI calls every 24 hours." },
-        { status: 429 }
-      );
+      return NextResponse.json({
+        email: mockEmail(emailInput, purpose, tone),
+        noApiKey: false,
+        aiError: false,
+        provider: "Mock (quota exceeded)",
+        isMock: true,
+        quotaExceeded: true,
+      });
     }
 
-    // ── Injected provider via AIService Dependency Injection ──────
+    // 4. Call AI provider via dependency injection
     const aiService = new AIService(getAIProvider());
     let email;
     let aiError = false;
-    try {
-      email = await aiService.generateEmail(
-        { contactName: deal.contactName, company: deal.company, title: deal.title },
-        purpose,
-        tone
-      );
+    let isMock = false;
 
-      // 4. Log the successful call with its result payload
+    try {
+      email = await aiService.generateEmail(emailInput, purpose, tone);
+
       if (email && !email.noApiKey) {
         await logAiCall(session.user.id, "email-generator", key, email);
       }
     } catch (err) {
-      console.error(`⚠️ [${aiService.providerName}] generateEmail failed:`, err);
+      console.error(`⚠️ [${aiService.providerName}] generateEmail failed — serving mock:`, err);
       aiError = true;
     }
 
+    // 5. Fall back to mock if provider failed or no key
+    if (!email || email.noApiKey || aiError) {
+      email = mockEmail(emailInput, purpose, tone);
+      isMock = true;
+    }
+
     return NextResponse.json({
-      email: email ?? null,
-      noApiKey: email?.noApiKey ?? false,
+      email,
+      noApiKey: false,
       aiError,
-      provider: aiService.providerName,
+      provider: isMock ? "Mock (AI unavailable)" : aiService.providerName,
+      isMock,
     });
   } catch (error) {
     console.error("Error in AI Email Generator route:", error);

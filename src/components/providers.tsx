@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { SessionProvider } from "next-auth/react";
+
+const SessionProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 import { SidebarProvider } from "./ui/sidebar";
 import { Toaster } from "react-hot-toast";
 

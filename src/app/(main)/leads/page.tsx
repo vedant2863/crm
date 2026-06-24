@@ -1,11 +1,11 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { 
-  Plus, Search, Download, Trash2, Edit, AlertCircle, 
-  Table, Grid, Check, Sparkles, X, Copy, RefreshCw, 
+import { useSession } from "@/lib/auth/auth-client";
+import {
+  Plus, Search, Download, Trash2, Edit, AlertCircle,
+  Table, Grid, Check, Sparkles, X, Copy, RefreshCw,
   ExternalLink, Mail, ShieldAlert, ArrowUpDown, ChevronRight,
   TrendingUp, Users, DollarSign, Award, ArrowUpRight
 } from "lucide-react";
@@ -33,7 +33,7 @@ const PRIORITIES = ["low", "medium", "high"];
 
 export default function LeadsPage() {
   const { status } = useSession();
-  
+
   // Filtering & Sorting State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStage, setSelectedStage] = useState<string>("all");
@@ -57,7 +57,7 @@ export default function LeadsPage() {
   // AI Summary & Email states
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
-  
+
   const [aiEmail, setAiEmail] = useState<any>(null);
   const [aiEmailLoading, setAiEmailLoading] = useState(false);
   const [emailPurpose, setEmailPurpose] = useState("Follow-up");
@@ -184,17 +184,17 @@ export default function LeadsPage() {
   const filteredLeads = rawDeals.filter(lead => {
     // Search Term
     const term = searchTerm.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       lead.title.toLowerCase().includes(term) ||
       (lead.contactName && lead.contactName.toLowerCase().includes(term)) ||
       (lead.company && lead.company.toLowerCase().includes(term));
-    
+
     // Stage Filter
     const matchesStage = selectedStage === "all" || lead.stage === selectedStage;
-    
+
     // Priority Filter
     const matchesPriority = selectedPriority === "all" || lead.priority === selectedPriority;
-    
+
     // Source Filter
     // In our Deal model, source might be saved in tags or custom fields, or we use a fallback mapping.
     // Let's assume we map tags to sources or just match against a simulated property.
@@ -235,7 +235,7 @@ export default function LeadsPage() {
 
   // Selection toggle
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => 
+    setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
@@ -270,9 +270,9 @@ export default function LeadsPage() {
       ];
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -336,7 +336,7 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      
+
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -457,9 +457,9 @@ export default function LeadsPage() {
 
           <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
             {selectedIds.length > 0 && (
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={handleBulkDelete}
                 className="rounded-full text-xs h-8 px-4"
               >
@@ -479,8 +479,8 @@ export default function LeadsPage() {
               <thead>
                 <tr className="border-b bg-muted/20 font-bold uppercase tracking-wider text-muted-foreground/80">
                   <th className="p-4 w-10">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={sortedLeads.length > 0 && selectedIds.length === sortedLeads.length}
                       onChange={toggleSelectAll}
                       className="rounded border-gray-300 text-primary"
@@ -506,9 +506,9 @@ export default function LeadsPage() {
                   const stageObj = DEAL_STAGES.find(s => s.key === lead.stage);
                   const source = lead.tags && lead.tags.length > 0 ? lead.tags[0] : "Other";
                   const initial = lead.contactName ? lead.contactName.charAt(0).toUpperCase() : "L";
-                  
+
                   return (
-                    <tr 
+                    <tr
                       key={lead._id}
                       className={cn(
                         "hover:bg-muted/15 cursor-pointer transition-colors group/row",
@@ -517,8 +517,8 @@ export default function LeadsPage() {
                       onClick={() => handleOpenDrawer(lead)}
                     >
                       <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={selectedIds.includes(lead._id)}
                           onChange={() => toggleSelect(lead._id)}
                           className="rounded border-gray-300 text-primary"
@@ -543,8 +543,8 @@ export default function LeadsPage() {
                         <span className={cn(
                           "px-2.5 py-1 rounded-full text-[10px] font-black uppercase border",
                           lead.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-                          lead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                          "bg-gray-500/10 text-gray-600 border-gray-500/20"
+                            lead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                              "bg-gray-500/10 text-gray-600 border-gray-500/20"
                         )}>
                           {lead.priority}
                         </span>
@@ -599,9 +599,9 @@ export default function LeadsPage() {
             const stageObj = DEAL_STAGES.find(s => s.key === lead.stage);
             const source = lead.tags && lead.tags.length > 0 ? lead.tags[0] : "Other";
             const initial = lead.contactName ? lead.contactName.charAt(0).toUpperCase() : "L";
-            
+
             return (
-              <div 
+              <div
                 key={lead._id}
                 className={cn(
                   "group relative bg-card border rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col gap-4 min-h-[180px]",
@@ -621,8 +621,8 @@ export default function LeadsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={selectedIds.includes(lead._id)}
                       onChange={() => toggleSelect(lead._id)}
                       className="rounded border-gray-300 text-primary h-4.5 w-4.5"
@@ -638,8 +638,8 @@ export default function LeadsPage() {
                   <span className={cn(
                     "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border",
                     lead.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-                    lead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                    "bg-gray-500/10 text-gray-600 border-gray-500/20"
+                      lead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                        "bg-gray-500/10 text-gray-600 border-gray-500/20"
                   )}>
                     {lead.priority}
                   </span>
@@ -699,13 +699,13 @@ export default function LeadsPage() {
 
               {/* Action Buttons Row */}
               <div className="flex gap-2.5">
-                <Button 
+                <Button
                   onClick={() => handleOpenDialog(selectedLead)}
                   className="flex-1 rounded-full font-bold h-10 text-xs"
                 >
                   <Edit className="h-3.5 w-3.5 mr-1.5" /> Edit Details
                 </Button>
-                <Button 
+                <Button
                   variant="destructive"
                   onClick={() => handleDelete(selectedLead._id)}
                   className="rounded-full font-bold h-10 text-xs px-4"
@@ -732,8 +732,8 @@ export default function LeadsPage() {
                   <span className={cn(
                     "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border inline-block mt-0.5",
                     selectedLead.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-                    selectedLead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                    "bg-gray-500/10 text-gray-600 border-gray-500/20"
+                      selectedLead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                        "bg-gray-500/10 text-gray-600 border-gray-500/20"
                   )}>
                     {selectedLead.priority}
                   </span>
@@ -767,8 +767,8 @@ export default function LeadsPage() {
                     <Sparkles className="h-4 w-4" /> AI Lead Summary
                   </div>
                   {!aiSummary && (
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={generateSummary}
                       disabled={aiSummaryLoading}
                       className="rounded-full text-[10px] h-7 px-3"
@@ -800,8 +800,8 @@ export default function LeadsPage() {
                         <span className={cn(
                           "text-sm font-black",
                           aiSummary.riskScore > 70 ? "text-rose-500" :
-                          aiSummary.riskScore > 40 ? "text-amber-500" :
-                          "text-emerald-500"
+                            aiSummary.riskScore > 40 ? "text-amber-500" :
+                              "text-emerald-500"
                         )}>
                           {aiSummary.riskScore}/100
                         </span>
@@ -812,8 +812,8 @@ export default function LeadsPage() {
                         <span className={cn(
                           "font-black uppercase text-[10px]",
                           aiSummary.suggestedPriority === "high" ? "text-rose-500" :
-                          aiSummary.suggestedPriority === "medium" ? "text-amber-500" :
-                          "text-emerald-500"
+                            aiSummary.suggestedPriority === "medium" ? "text-amber-500" :
+                              "text-emerald-500"
                         )}>
                           {aiSummary.suggestedPriority}
                         </span>
@@ -832,9 +832,9 @@ export default function LeadsPage() {
                       <p className="text-primary font-bold">{aiSummary.nextBestAction}</p>
                     </div>
 
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => setAiSummary(null)} 
+                    <Button
+                      variant="ghost"
+                      onClick={() => setAiSummary(null)}
                       className="text-[9px] text-muted-foreground hover:text-foreground h-6 px-2 self-start rounded-md"
                     >
                       Clear Summary
@@ -879,7 +879,7 @@ export default function LeadsPage() {
                 </div>
 
                 {!aiEmail && (
-                  <Button 
+                  <Button
                     onClick={generateEmail}
                     disabled={aiEmailLoading}
                     className="rounded-full text-[10px] h-8 bg-violet-600 hover:bg-violet-700 text-white font-bold"
@@ -905,7 +905,7 @@ export default function LeadsPage() {
                     <div className="space-y-1 bg-card/65 p-3 border rounded-xl">
                       <div className="flex items-center justify-between border-b pb-1.5 mb-2">
                         <span className="text-[9px] text-muted-foreground font-black uppercase">Subject Line</span>
-                        <button 
+                        <button
                           onClick={() => {
                             navigator.clipboard.writeText(aiEmail.subject);
                             toast.success("Subject copied!");
@@ -921,7 +921,7 @@ export default function LeadsPage() {
                     <div className="space-y-1 bg-card/65 p-3 border rounded-xl">
                       <div className="flex items-center justify-between border-b pb-1.5 mb-2">
                         <span className="text-[9px] text-muted-foreground font-black uppercase">Email Body</span>
-                        <button 
+                        <button
                           onClick={() => {
                             navigator.clipboard.writeText(aiEmail.body);
                             toast.success("Body copied!");
@@ -939,9 +939,9 @@ export default function LeadsPage() {
                       />
                     </div>
 
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => setAiEmail(null)} 
+                    <Button
+                      variant="ghost"
+                      onClick={() => setAiEmail(null)}
                       className="text-[9px] text-muted-foreground hover:text-foreground h-6 px-2 self-start rounded-md"
                     >
                       Clear Email

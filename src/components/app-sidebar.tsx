@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth/auth-client";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -64,7 +64,7 @@ export function AppSidebar() {
   };
 
   return (
-    <aside 
+    <aside
       className="fixed left-0 top-16 bottom-0 w-[72px] border-r border-border bg-background/50 backdrop-blur-md z-30 flex flex-col items-center py-6 justify-between transition-all duration-300"
       style={{
         margin: "1rem 0 1rem 1rem",
@@ -83,14 +83,14 @@ export function AppSidebar() {
               href={item.url}
               className={cn(
                 "h-11 w-11 flex items-center justify-center rounded-2xl transition-all duration-300 relative group",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
               title={item.title}
             >
               <item.icon className="h-5 w-5" />
-              
+
               {/* Tooltip */}
               <span className="absolute left-16 scale-0 transition-all rounded-lg bg-popover border text-popover-foreground px-2 py-1 text-xs font-bold shadow-md group-hover:scale-100 whitespace-nowrap z-50">
                 {item.title}
@@ -107,7 +107,7 @@ export function AppSidebar() {
         title="Sign Out"
       >
         <LogOut className="h-5 w-5" />
-        
+
         {/* Tooltip */}
         <span className="absolute left-16 scale-0 transition-all rounded-lg bg-popover border text-popover-foreground px-2 py-1 text-xs font-bold shadow-md group-hover:scale-100 whitespace-nowrap z-50">
           Sign Out

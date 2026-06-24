@@ -4,8 +4,7 @@
  * HTTP Translation Layer for notifications.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "@/lib/auth/auth";
 import {
   getNotifications,
   markAsRead,
@@ -13,7 +12,7 @@ import {
 } from "../services/notification-service";
 
 async function requireAuth() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
   return session.user.id;
 }
@@ -31,7 +30,7 @@ function handleError(err: unknown) {
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 }
 
-export async function handleGetNotifications(req: NextRequest) {
+export async function handleGetNotifications() {
   try {
     const userId = await requireAuth();
     const notifications = await getNotifications(userId);
@@ -41,7 +40,7 @@ export async function handleGetNotifications(req: NextRequest) {
   }
 }
 
-export async function handleMarkAllAsRead(req: NextRequest) {
+export async function handleMarkAllAsRead() {
   try {
     const userId = await requireAuth();
     await markAllAsRead(userId);

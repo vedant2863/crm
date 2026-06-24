@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { Contact } from "@/features/contacts/types/type";
 import { getContacts, deleteContact, updateContact } from "@/features/contacts/services/contact-client-service";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth/auth-client";
 import toast from "react-hot-toast";
 
 interface UseContactsReturn {

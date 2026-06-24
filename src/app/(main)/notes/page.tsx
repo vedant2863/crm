@@ -1,11 +1,11 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { 
-  Pin, Trash2, Edit, Plus, Search, Calendar, Link2, 
-  StickyNote, AlertCircle, RefreshCw, X 
+import { useSession } from "@/lib/auth/auth-client";
+import {
+  Pin, Trash2, Edit, Plus, Search, Calendar, Link2,
+  StickyNote, AlertCircle, RefreshCw, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,7 +47,7 @@ export default function NotesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -140,7 +140,7 @@ export default function NotesPage() {
       }
 
       if (!res.ok) throw new Error("Failed to save note");
-      
+
       toast.success(editingNote ? "Note updated" : "Note created");
       setDialogOpen(false);
       fetchNotes();
@@ -372,7 +372,7 @@ interface NoteCardProps {
 function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
   return (
     <div className="group relative bg-card border rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 flex flex-col gap-3 min-h-[140px]">
-      
+
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-bold text-sm text-foreground">
@@ -410,7 +410,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
 
       {/* Footer Details */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 mt-1 text-[10px] text-muted-foreground">
-        
+
         {/* Linked Lead Info */}
         {note.dealId ? (
           <div className="flex items-center gap-1 max-w-[60%] text-primary font-bold">

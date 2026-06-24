@@ -43,7 +43,7 @@ export function useNotifications() {
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
       await markNotificationAsRead(id);
-    } catch (error) {
+    } catch {
       toast.error("Failed to mark notification as read");
       // Revert on failure
       loadNotifications(true);
@@ -56,7 +56,7 @@ export function useNotifications() {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       await markAllNotificationsAsRead();
       toast.success("All notifications marked as read");
-    } catch (error) {
+    } catch {
       toast.error("Failed to mark all as read");
       loadNotifications(true);
     }

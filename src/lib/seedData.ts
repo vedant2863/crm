@@ -4,6 +4,7 @@
  */
 
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import dbConnect from './dbConnect';
 import User from '@/models/user';
 import Contact from '@/models/contact';
@@ -39,6 +40,12 @@ export async function seedDatabase(): Promise<SeedResult> {
     await Contact.deleteMany({});
     await User.deleteMany({});
     await Note.deleteMany({});
+
+    const db = mongoose.connection.db;
+    if (db) {
+      await db.collection('accounts').deleteMany({});
+      await db.collection('sessions').deleteMany({});
+    }
 
     console.log('🧹 Cleared existing data...');
 
@@ -123,6 +130,21 @@ export async function seedDatabase(): Promise<SeedResult> {
         timezone: 'America/Los_Angeles'
       })
     ]);
+
+    if (db) {
+      await Promise.all(
+        users.map((user) =>
+          db.collection('accounts').insertOne({
+            userId: user._id.toString(),
+            accountId: user._id.toString(),
+            providerId: 'credential',
+            password: hashedPassword,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+        )
+      );
+    }
 
     console.log('👥 Created users...');
 

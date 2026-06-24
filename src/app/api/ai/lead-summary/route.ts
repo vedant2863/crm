@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "@/lib/auth/auth";
 import dbConnect from "@/lib/dbConnect";
 import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
-
 import { getPreviousAiCall, hasAiQuota, logAiCall } from "@/lib/ai/rate-limit";
+import { mockLeadSummary } from "@/lib/ai/mock";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    // 1. Try to serve from database cache if not forced
+    // 1. Serve from DB cache if not forced
     if (force !== true) {
       const cachedResult = await getPreviousAiCall(session.user.id, key);
       if (cachedResult) {
@@ -33,6 +32,7 @@ export async function POST(req: NextRequest) {
           noApiKey: false,
           aiError: false,
           provider: "Cached",
+          isMock: false,
         });
       }
     }
@@ -43,45 +43,58 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    // 3. Check rolling 24-hour rate limit
+    const leadInput = {
+      title: deal.title,
+      company: deal.company,
+      value: deal.value,
+      stage: deal.stage,
+      priority: deal.priority,
+      notes: deal.notes,
+      contactName: deal.contactName,
+    };
+
+    // 3. Check rolling 24-hour quota — serve mock if exceeded
     const allowed = await hasAiQuota(session.user.id);
     if (!allowed) {
-      return NextResponse.json(
-        { error: "Daily quota exceeded. You can only make 5 AI calls every 24 hours." },
-        { status: 429 }
-      );
+      return NextResponse.json({
+        summary: mockLeadSummary(leadInput),
+        noApiKey: false,
+        aiError: false,
+        provider: "Mock (quota exceeded)",
+        isMock: true,
+        quotaExceeded: true,
+      });
     }
 
-    // ── Injected provider via AIService Dependency Injection ──────
+    // 4. Call AI provider via dependency injection
     const aiService = new AIService(getAIProvider());
-
     let summary;
     let aiError = false;
-    try {
-      summary = await aiService.getLeadSummary({
-        title: deal.title,
-        company: deal.company,
-        value: deal.value,
-        stage: deal.stage,
-        priority: deal.priority,
-        notes: deal.notes,
-        contactName: deal.contactName,
-      });
+    let isMock = false;
 
-      // 4. Log the successful call with its result payload
+    try {
+      summary = await aiService.getLeadSummary(leadInput);
+
       if (summary && !summary.noApiKey) {
         await logAiCall(session.user.id, "lead-summary", key, summary);
       }
     } catch (err) {
-      console.error(`⚠️ [${aiService.providerName}] getLeadSummary failed:`, err);
+      console.error(`⚠️ [${aiService.providerName}] getLeadSummary failed — serving mock:`, err);
       aiError = true;
     }
 
+    // 5. Fall back to mock if provider failed or no key
+    if (!summary || summary.noApiKey || aiError) {
+      summary = mockLeadSummary(leadInput);
+      isMock = true;
+    }
+
     return NextResponse.json({
-      summary: summary ?? null,
-      noApiKey: summary?.noApiKey ?? false,
+      summary,
+      noApiKey: false,
       aiError,
-      provider: aiService.providerName,
+      provider: isMock ? "Mock (AI unavailable)" : aiService.providerName,
+      isMock,
     });
   } catch (error) {
     console.error("Error in AI Lead Summary route:", error);

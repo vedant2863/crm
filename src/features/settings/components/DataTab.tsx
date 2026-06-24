@@ -1,16 +1,44 @@
 "use client";
 
-import { Download, Upload, Trash2, Database, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Upload, Trash2, Database, AlertTriangle, FileJson, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import toast from "react-hot-toast";
 
 interface DataTabProps {
-    onExport: () => void;
     onImport: () => void;
     onDeleteAccount: () => void;
 }
 
-export function DataTab({ onExport, onImport, onDeleteAccount }: DataTabProps) {
+export function DataTab({ onImport, onDeleteAccount }: DataTabProps) {
+    const [exporting, setExporting] = useState(false);
+
+    const handleExport = async (format: "json" | "csv") => {
+        setExporting(true);
+        try {
+            const res = await fetch(`/api/settings/export?format=${format}`);
+            if (!res.ok) throw new Error(await res.text());
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `crm-export-${Date.now()}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast.success(`Data exported as ${format.toUpperCase()}`);
+        } catch (err) {
+            console.error(err);
+            toast.error("Export failed. Please try again.");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
@@ -21,16 +49,37 @@ export function DataTab({ onExport, onImport, onDeleteAccount }: DataTabProps) {
                     <CardDescription>Export your data or import from other sources.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
-                    <div className="flex items-center justify-between p-5 rounded-xl border bg-card/50">
+                    {/* Export section */}
+                    <div className="p-5 rounded-xl border bg-card/50 space-y-4">
                         <div className="space-y-1">
                             <h4 className="text-sm font-bold uppercase tracking-tight">Export Data</h4>
-                            <p className="text-xs text-muted-foreground">Download a copy of all your contacts, deals, and tasks in JSON format.</p>
+                            <p className="text-xs text-muted-foreground">
+                                Download all your contacts, deals, tasks, and notes. Choose a format below.
+                            </p>
                         </div>
-                        <Button variant="secondary" onClick={onExport} className="h-9 gap-2">
-                            <Download className="h-4 w-4" /> Export
-                        </Button>
+                        <div className="flex flex-wrap gap-3">
+                            <Button
+                                variant="secondary"
+                                onClick={() => handleExport("json")}
+                                disabled={exporting}
+                                className="h-9 gap-2"
+                            >
+                                <FileJson className="h-4 w-4" />
+                                {exporting ? "Exporting…" : "Export JSON"}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={() => handleExport("csv")}
+                                disabled={exporting}
+                                className="h-9 gap-2"
+                            >
+                                <FileSpreadsheet className="h-4 w-4" />
+                                {exporting ? "Exporting…" : "Export CSV (Deals)"}
+                            </Button>
+                        </div>
                     </div>
 
+                    {/* Import section */}
                     <div className="flex items-center justify-between p-5 rounded-xl border bg-card/50">
                         <div className="space-y-1">
                             <h4 className="text-sm font-bold uppercase tracking-tight">Import from CSV</h4>

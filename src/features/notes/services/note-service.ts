@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import dbConnect from "@/lib/dbConnect";
 import Note, { INote } from "@/models/note";
 import mongoose from "mongoose";
