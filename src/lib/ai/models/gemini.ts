@@ -7,7 +7,6 @@
 import { GoogleGenAI } from "@google/genai";
 import envConfig from "@/lib/config/envconfig";
 import { fromCache, toCache } from "../provider";
-import { AI_CONFIG } from "../config";
 import {
   LEAD_SUMMARY_SYSTEM,
   getLeadSummaryUserPrompt,
