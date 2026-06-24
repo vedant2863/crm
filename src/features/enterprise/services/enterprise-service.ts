@@ -11,6 +11,7 @@ import Comment from "@/models/comment";
 import User from "@/models/user";
 import mongoose from "mongoose";
 import { sendEmail } from "@/lib/email/resend";
+import envConfig from "@/lib/config/envconfig";
 
 /** Fetch a user's company/organization name */
 export async function getUserOrg(userId: string): Promise<string> {
@@ -79,8 +80,8 @@ export async function sendEmailNotification(
     return;
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromAddress = process.env.EMAIL_FROM || "CRM OS <onboarding@resend.dev>";
+  const apiKey = envConfig.RESEND_API_KEY;
+  const fromAddress = envConfig.EMAIL_FROM;
 
   if (apiKey) {
     // ── Live dispatch via Resend transport ──────────────────────────────────

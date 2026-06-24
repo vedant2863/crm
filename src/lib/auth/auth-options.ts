@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/user";
 import { NextAuthOptions } from "next-auth";
+import envConfig from "@/lib/config/envconfig";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -60,5 +61,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: envConfig.NEXTAUTH_SECRET,
 };

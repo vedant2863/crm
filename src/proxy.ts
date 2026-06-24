@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import envConfig from "@/lib/config/envconfig";
 
 /**
  * Paths that are always accessible without a session.
@@ -34,7 +35,7 @@ export async function proxy(request: NextRequest) {
   // 3. Retrieve NextAuth session token
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: envConfig.NEXTAUTH_SECRET,
   });
 
   // 4. Redirect unauthenticated users to /login

@@ -1,16 +1,17 @@
 import { MongoClient } from "mongodb";
+import envConfig from "@/lib/config/envconfig";
 
-const uri = process.env.MONGODB_URI!;
+const uri = envConfig.MONGODB_URI;
 
 declare global {
     var mongoClient: MongoClient | undefined;
 }
 
-export const client = process.env.NODE_ENV === "development"
+export const client = envConfig.IS_DEV
     ? (global.mongoClient || (global.mongoClient = new MongoClient(uri)))
     : new MongoClient(uri);
 
-if (process.env.NODE_ENV === "development") {
+if (envConfig.IS_DEV) {
     global.mongoClient = client;
 }
 

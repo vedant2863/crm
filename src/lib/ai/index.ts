@@ -17,20 +17,22 @@ import { GeminiProvider } from "./models/gemini";
 import { GroqProvider } from "./models/groq";
 import { FallbackProvider } from "./fallback";
 import type { AIProvider } from "./provider";
+import envConfig from "@/lib/config/envconfig";
 
 export class AIManager {
   private static instance: AIManager | null = null;
   private activeProvider: AIProvider;
 
   private constructor() {
-    const name = (process.env.AI_PROVIDER ?? "gemini").toLowerCase();
+    const name = envConfig.AI_PROVIDER;
 
     if (name === "groq") {
       this.activeProvider = new GroqProvider();
     } else if (name === "gemini") {
-      this.activeProvider = new FallbackProvider();
-    } else {
       this.activeProvider = new GeminiProvider();
+    } else {
+      // Default: try Gemini first, fall back to Groq
+      this.activeProvider = new FallbackProvider();
     }
 
     console.info(

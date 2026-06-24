@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GoogleGenAI } from "@google/genai";
+import envConfig from "@/lib/config/envconfig";
 import { fromCache, toCache } from "../provider";
 import { AI_CONFIG } from "../config";
 import {
@@ -38,9 +39,9 @@ export class GeminiProvider implements AIProvider {
   private readonly url: string;
 
   constructor() {
-    const key = process.env.GEMINI_API_KEY ?? "";
-    this.model = process.env.GEMINI_MODEL ?? AI_CONFIG.gemini.defaultModel;
-    this.url = process.env.GEMINI_API_URL ?? AI_CONFIG.gemini.defaultUrl;
+    const key = envConfig.GEMINI_API_KEY;
+    this.model = envConfig.GEMINI_MODEL;
+    this.url = envConfig.GEMINI_API_URL;
     this.hasKey = !!key;
     this.client = this.hasKey ? new GoogleGenAI({ apiKey: key }) : null;
   }

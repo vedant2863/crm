@@ -5,9 +5,10 @@
 
 import { Resend } from "resend";
 import { EmailMessage } from "./message";
+import envConfig from "@/lib/config/envconfig";
 
 // Initialize Resend client with API key from environment
-const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
+const resend = new Resend(envConfig.RESEND_API_KEY || "re_dummy_key_for_build");
 
 /**
  * Sends an email using the Resend API.
@@ -17,7 +18,7 @@ const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build"
  */
 export async function sendEmail(message: EmailMessage): Promise<{ success: boolean; data?: unknown; error?: unknown }> {
   try {
-    const fromAddress = message.from || process.env.EMAIL_FROM || "onboarding@resend.dev";
+    const fromAddress = message.from || envConfig.EMAIL_FROM;
     
     const response = await resend.emails.send({
       from: fromAddress,

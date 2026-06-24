@@ -4,6 +4,7 @@
  */
 
 import { Groq } from "groq-sdk";
+import envConfig from "@/lib/config/envconfig";
 import { fromCache, toCache } from "../provider";
 import { AI_CONFIG } from "../config";
 import {
@@ -31,8 +32,8 @@ export class GroqProvider implements AIProvider {
   private readonly model: string;
 
   constructor() {
-    const key = process.env.GROQ_API_KEY ?? process.env.GROK_API_KEY ?? "";
-    this.model = process.env.GROQ_MODEL ?? process.env.GROK_MODEL ?? AI_CONFIG.groq.defaultModel;
+    const key = envConfig.GROQ_API_KEY;
+    this.model = envConfig.GROQ_MODEL;
     this.hasKey = !!key;
     this.client = this.hasKey ? new Groq({ apiKey: key }) : null;
   }
