@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     await dbConnect();
 
-    const remaining = await getAiRemaining(session.user.id);
+    const remaining = await getAiRemaining(session.user.id, "sales-insights");
 
     // 1. Serve from DB cache if not a forced refresh
     if (!force) {
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }[]).map(d => ({ title: d.title, value: d.value, stage: d.stage, priority: d.priority, company: d.company }));
 
     // 2. Check rolling 24-hour quota — return rate limit error if exceeded
-    const allowed = await hasAiQuota(session.user.id);
+    const allowed = await hasAiQuota(session.user.id, "sales-insights");
     if (!allowed) {
       return NextResponse.json({
         error: "Rolling 24-hour AI quota exceeded. Limit is 5 requests.",
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get updated remaining count after logging the call
-    const updatedRemaining = await getAiRemaining(session.user.id);
+    const updatedRemaining = await getAiRemaining(session.user.id, "sales-insights");
 
     return NextResponse.json({
       insights,

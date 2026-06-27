@@ -47,6 +47,19 @@ export async function seedDatabase() {
 
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
+  // Check if we already have seeded data for this user
+  const contactCount = await Contact.countDocuments({ userId });
+  if (contactCount > 0) {
+    console.log("Database already seeded. No changes made.");
+    return {
+      userId,
+      contacts: [],
+      deals: [],
+      tasks: [],
+      notes: [],
+    };
+  }
+
   // Clear existing collections specifically for this user to protect other users' data
   await Promise.all([
     Contact.deleteMany({ userId }),

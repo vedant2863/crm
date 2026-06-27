@@ -3,7 +3,7 @@
  * @description Google Gemini provider implementation utilizing the official @google/genai SDK for structured generation.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { GoogleGenAI } from "@google/genai";
 import envConfig from "@/lib/config/envconfig";
 import { fromCache, toCache } from "../provider";
@@ -35,12 +35,10 @@ export class GeminiProvider implements AIProvider {
   private readonly hasKey: boolean;
   private client: GoogleGenAI | null;
   private readonly model: string;
-  private readonly url: string;
 
   constructor() {
-    const key = envConfig.GEMINI_API_KEY;
-    this.model = envConfig.GEMINI_MODEL;
-    this.url = envConfig.GEMINI_API_URL;
+    const key = envConfig.ai.gemini.apiKey;
+    this.model = envConfig.ai.gemini.model;
     this.hasKey = !!key;
     this.client = this.hasKey ? new GoogleGenAI({ apiKey: key }) : null;
   }

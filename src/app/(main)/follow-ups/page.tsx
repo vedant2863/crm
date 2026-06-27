@@ -1,12 +1,21 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 
 import { useState } from "react";
-import { useSession } from "@/lib/auth/auth-client";
+
 import {
-  Plus, CheckCircle2, AlertCircle, Calendar, Clock,
-  ChevronDown, AlertTriangle, ArrowUpRight, Search,
-  Trash2, Edit, Check
+  Plus,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  Search,
+  Trash2,
+  Edit,
+  Check,
+  Table,
+  Grid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,24 +24,20 @@ import { TaskDialog } from "@/features/tasks/components/TaskDialog";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/lib/auth/auth-client";
 
 export default function FollowUpsPage() {
   const { status } = useSession();
+  const [viewMode, setViewMode] = useState<"list" | "table">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Fetch all tasks for this user
-  const {
-    tasks,
-    loading,
-    error,
-    createTask,
-    updateTask,
-    deleteTask,
-  } = useTasks({
-    limit: 200, // Fetch all tasks so we can group them locally
-  });
+  const { tasks, loading, error, createTask, updateTask, deleteTask } =
+    useTasks({
+      limit: 200, // Fetch all tasks so we can group them locally
+    });
 
   const handleOpenDialog = (task: Task | null = null) => {
     setEditingTask(task);
@@ -54,12 +59,16 @@ export default function FollowUpsPage() {
   };
 
   const handleToggleStatus = async (taskId: string) => {
-    const task = tasks.find(t => t._id === taskId);
+    const task = tasks.find((t) => t._id === taskId);
     if (!task) return;
     const nextStatus = task.status === "completed" ? "pending" : "completed";
     try {
       await updateTask(taskId, { status: nextStatus });
-      toast.success(nextStatus === "completed" ? "Marked as completed" : "Marked as pending");
+      toast.success(
+        nextStatus === "completed"
+          ? "Marked as completed"
+          : "Marked as pending",
+      );
     } catch (err: any) {
       toast.error(err.message || "Failed to update status");
     }
@@ -87,7 +96,9 @@ export default function FollowUpsPage() {
         </div>
         <Skeleton className="h-4 w-full rounded-full" />
         <div className="space-y-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
+          ))}
         </div>
       </div>
     );
@@ -98,7 +109,9 @@ export default function FollowUpsPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Authentication Required</h1>
-          <p className="text-muted-foreground">Please log in to manage follow-up tasks.</p>
+          <p className="text-muted-foreground">
+            Please log in to manage follow-up tasks.
+          </p>
         </div>
       </div>
     );
@@ -117,7 +130,7 @@ export default function FollowUpsPage() {
   }
 
   // Filter tasks locally by search term
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     const term = searchTerm.toLowerCase();
     return (
       task.title.toLowerCase().includes(term) ||
@@ -137,7 +150,7 @@ export default function FollowUpsPage() {
   const upcomingList: Task[] = [];
   const completedList: Task[] = [];
 
-  filteredTasks.forEach(task => {
+  filteredTasks.forEach((task) => {
     if (task.status === "completed" || task.status === "cancelled") {
       completedList.push(task);
       return;
@@ -159,21 +172,28 @@ export default function FollowUpsPage() {
   });
 
   // Calculate completion progress
-  const activeCount = tasks.filter(t => t.status !== "completed" && t.status !== "cancelled").length;
-  const completedCount = tasks.filter(t => t.status === "completed").length;
+  const activeCount = tasks.filter(
+    (t) => t.status !== "completed" && t.status !== "cancelled",
+  ).length;
+  const completedCount = tasks.filter((t) => t.status === "completed").length;
   const totalCount = activeCount + completedCount;
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const progressPercent =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Follow-ups</h1>
-          <p className="text-muted-foreground mt-1">Track due dates, stay on top of client commitments.</p>
+          <p className="text-muted-foreground mt-1">
+            Track due dates, stay on top of client commitments.
+          </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
+        <Button
+          onClick={() => handleOpenDialog()}
+          className="shadow-lg hover:shadow-xl transition-all"
+        >
           <Plus className="h-4 w-4 mr-2" /> Add Follow-up
         </Button>
       </div>
@@ -182,7 +202,9 @@ export default function FollowUpsPage() {
       <div className="bg-card border rounded-3xl p-5 shadow-sm flex flex-col gap-2.5">
         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <span>Task Completion Progress</span>
-          <span className="text-primary font-black">{progressPercent}% ({completedCount} of {totalCount} completed)</span>
+          <span className="text-primary font-black">
+            {progressPercent}% ({completedCount} of {totalCount} completed)
+          </span>
         </div>
         <div className="w-full bg-muted rounded-full h-3.5 overflow-hidden">
           <div
@@ -192,108 +214,235 @@ export default function FollowUpsPage() {
         </div>
       </div>
 
-      {/* Search Input */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search follow-ups..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search & Toggle row */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card border rounded-3xl p-4 shadow-sm">
+        <div className="relative flex-1 w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search follow-ups..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-background"
+          />
+        </div>
+        <div className="flex items-center gap-1 border p-1 rounded-full bg-muted/30 shrink-0 self-stretch md:self-auto justify-center">
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+            className="rounded-full h-8"
+          >
+            <Grid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "table" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("table")}
+            className="rounded-full h-8"
+          >
+            <Table className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Grouped Lists */}
-      <div className="space-y-6">
+      {/* Grouped Lists or Table */}
+      {viewMode === "list" ? (
+        <div className="space-y-6">
+          {/* Overdue */}
+          {overdueList.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5 fill-current" /> Overdue
+              </h2>
+              <div className="flex flex-col gap-3">
+                {overdueList.map((task) => (
+                  <FollowUpCard
+                    key={task._id}
+                    task={task}
+                    onToggleStatus={handleToggleStatus}
+                    onEdit={handleOpenDialog}
+                    onDelete={handleDelete}
+                    badgeStyle="bg-rose-500/10 text-rose-600 border-rose-500/20"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-        {/* Overdue */}
-        {overdueList.length > 0 && (
+          {/* Due Today */}
+          {todayList.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" /> Due Today
+              </h2>
+              <div className="flex flex-col gap-3">
+                {todayList.map((task) => (
+                  <FollowUpCard
+                    key={task._id}
+                    task={task}
+                    onToggleStatus={handleToggleStatus}
+                    onEdit={handleOpenDialog}
+                    onDelete={handleDelete}
+                    badgeStyle="bg-amber-500/10 text-amber-600 border-amber-500/20"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming */}
           <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1">
-              <AlertTriangle className="h-3.5 w-3.5 fill-current" /> Overdue
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" /> Upcoming
             </h2>
             <div className="flex flex-col gap-3">
-              {overdueList.map(task => (
+              {upcomingList.map((task) => (
                 <FollowUpCard
                   key={task._id}
                   task={task}
                   onToggleStatus={handleToggleStatus}
                   onEdit={handleOpenDialog}
                   onDelete={handleDelete}
-                  badgeStyle="bg-rose-500/10 text-rose-600 border-rose-500/20"
+                  badgeStyle="bg-blue-500/10 text-blue-600 border-blue-500/20"
                 />
               ))}
             </div>
+            {upcomingList.length === 0 &&
+              todayList.length === 0 &&
+              overdueList.length === 0 && (
+                <div className="text-center py-12 bg-card/40 border rounded-2xl border-dashed">
+                  <CheckCircle2 className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+                  <p className="text-xs text-muted-foreground font-medium">
+                    No active tasks
+                  </p>
+                </div>
+              )}
           </div>
-        )}
 
-        {/* Today */}
-        {todayList.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" /> Due Today
-            </h2>
-            <div className="flex flex-col gap-3">
-              {todayList.map(task => (
-                <FollowUpCard
-                  key={task._id}
-                  task={task}
-                  onToggleStatus={handleToggleStatus}
-                  onEdit={handleOpenDialog}
-                  onDelete={handleDelete}
-                  badgeStyle="bg-amber-500/10 text-amber-600 border-amber-500/20"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5" /> Upcoming
-          </h2>
-          <div className="flex flex-col gap-3">
-            {upcomingList.map(task => (
-              <FollowUpCard
-                key={task._id}
-                task={task}
-                onToggleStatus={handleToggleStatus}
-                onEdit={handleOpenDialog}
-                onDelete={handleDelete}
-                badgeStyle="bg-blue-500/10 text-blue-600 border-blue-500/20"
-              />
-            ))}
-          </div>
-          {upcomingList.length === 0 && todayList.length === 0 && overdueList.length === 0 && (
-            <div className="text-center py-12 bg-card/40 border rounded-2xl border-dashed">
-              <CheckCircle2 className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
-              <p className="text-xs text-muted-foreground font-medium">No active tasks</p>
+          {/* Completed */}
+          {completedList.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Completed
+              </h2>
+              <div className="flex flex-col gap-3 opacity-60">
+                {completedList.map((task) => (
+                  <FollowUpCard
+                    key={task._id}
+                    task={task}
+                    onToggleStatus={handleToggleStatus}
+                    onEdit={handleOpenDialog}
+                    onDelete={handleDelete}
+                    badgeStyle="bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
-
-        {/* Completed */}
-        {completedList.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Completed
-            </h2>
-            <div className="flex flex-col gap-3 opacity-60">
-              {completedList.map(task => (
-                <FollowUpCard
-                  key={task._id}
-                  task={task}
-                  onToggleStatus={handleToggleStatus}
-                  onEdit={handleOpenDialog}
-                  onDelete={handleDelete}
-                  badgeStyle="bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                />
-              ))}
-            </div>
+      ) : (
+        <div className="bg-card border rounded-3xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b bg-muted/20 font-bold uppercase tracking-wider text-muted-foreground/80">
+                  <th className="p-4 w-10">Done</th>
+                  <th className="p-4">Title</th>
+                  <th className="p-4">Priority</th>
+                  <th className="p-4">Due Date</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40 text-left">
+                {filteredTasks.map((task) => {
+                  const isCompleted = task.status === "completed" || task.status === "cancelled";
+                  return (
+                    <tr key={task._id} className={cn("hover:bg-muted/15 transition-colors group/row", isCompleted && "opacity-60")}>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleToggleStatus(task._id)}
+                          className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                            isCompleted
+                              ? "bg-emerald-500 border-emerald-500 text-white"
+                              : "border-muted-foreground/30 hover:border-primary hover:bg-primary/5 text-transparent",
+                          )}
+                        >
+                          <Check className="h-3 w-3 font-bold text-white" />
+                        </button>
+                      </td>
+                      <td className="p-4 font-bold">
+                        <div className="min-w-0">
+                          <p className={cn("text-foreground font-black truncate group-hover/row:text-primary transition-colors", isCompleted && "line-through text-muted-foreground")}>{task.title}</p>
+                          {task.description && (
+                            <p className="text-[10px] text-muted-foreground font-medium truncate max-w-md">{task.description}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={cn(
+                            "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
+                            task.priority === "high"
+                              ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                              : task.priority === "medium"
+                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                : "bg-gray-500/10 text-gray-600 border-gray-500/20",
+                          )}
+                        >
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td className="p-4 font-semibold">
+                        {task.dueDate ? (
+                          <span className={cn(
+                            new Date(task.dueDate) < todayStart && !isCompleted ? "text-rose-500" : "text-muted-foreground"
+                          )}>
+                            {new Date(task.dueDate).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDialog(task)}
+                            className="hover:bg-primary/5 hover:text-primary border-border/50 h-7"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive/30 hover:text-destructive h-7"
+                            onClick={() => handleDelete(task._id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredTasks.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center p-8 text-muted-foreground font-medium">
+                      No follow-ups found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <TaskDialog
         open={dialogOpen}
@@ -313,8 +462,15 @@ interface FollowUpCardProps {
   badgeStyle: string;
 }
 
-function FollowUpCard({ task, onToggleStatus, onEdit, onDelete, badgeStyle }: FollowUpCardProps) {
-  const isCompleted = task.status === "completed" || task.status === "cancelled";
+function FollowUpCard({
+  task,
+  onToggleStatus,
+  onEdit,
+  onDelete,
+  badgeStyle,
+}: FollowUpCardProps) {
+  const isCompleted =
+    task.status === "completed" || task.status === "cancelled";
 
   return (
     <div className="group relative bg-card border rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 flex items-center gap-4">
@@ -325,7 +481,7 @@ function FollowUpCard({ task, onToggleStatus, onEdit, onDelete, badgeStyle }: Fo
           "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
           isCompleted
             ? "bg-emerald-500 border-emerald-500 text-white"
-            : "border-muted-foreground/30 hover:border-primary hover:bg-primary/5 text-transparent"
+            : "border-muted-foreground/30 hover:border-primary hover:bg-primary/5 text-transparent",
         )}
       >
         <Check className="h-3.5 w-3.5 font-bold" />
@@ -333,10 +489,12 @@ function FollowUpCard({ task, onToggleStatus, onEdit, onDelete, badgeStyle }: Fo
 
       {/* Details */}
       <div className="flex-1 min-w-0">
-        <h3 className={cn(
-          "font-bold text-sm text-foreground truncate",
-          isCompleted && "line-through text-muted-foreground"
-        )}>
+        <h3
+          className={cn(
+            "font-bold text-sm text-foreground truncate",
+            isCompleted && "line-through text-muted-foreground",
+          )}
+        >
           {task.title}
         </h3>
         {task.description && (
@@ -349,17 +507,30 @@ function FollowUpCard({ task, onToggleStatus, onEdit, onDelete, badgeStyle }: Fo
       {/* Badges / Dates */}
       <div className="flex items-center gap-3 shrink-0">
         {task.dueDate && (
-          <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border", badgeStyle)}>
-            {new Date(task.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+          <span
+            className={cn(
+              "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
+              badgeStyle,
+            )}
+          >
+            {new Date(task.dueDate).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
           </span>
         )}
 
-        <span className={cn(
-          "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
-          task.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-            task.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-              "bg-gray-500/10 text-gray-600 border-gray-500/20"
-        )}>
+        <span
+          className={cn(
+            "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
+            task.priority === "high"
+              ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+              : task.priority === "medium"
+                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                : "bg-gray-500/10 text-gray-600 border-gray-500/20",
+          )}
+        >
           {task.priority}
         </span>
 

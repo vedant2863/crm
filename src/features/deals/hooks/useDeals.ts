@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "@/lib/auth/auth-client";
+
 import {
   dealService,
   DealsResponse,
   CreateDealRequest,
 } from "@/features/deals/services/deal-client-service";
 import { Deal } from "@/features/deals/types/deal";
+import { useSession } from "@/lib/auth/auth-client";
 
 export interface UseDealsOptions {
   search?: string;

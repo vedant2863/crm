@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "@/lib/auth/auth-client";
+
 import {
   taskService,
   TasksResponse,
   CreateTaskRequest,
 } from "@/features/tasks/services/task-client-service";
 import { Task } from "@/features/tasks/types/task";
+import { useSession } from "@/lib/auth/auth-client";
 
 export interface UseTasksOptions {
   search?: string;

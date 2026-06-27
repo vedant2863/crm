@@ -13,21 +13,6 @@ import mongoose from "mongoose";
 import { sendEmail } from "@/lib/email/resend";
 import envConfig from "@/lib/config/envconfig";
 
-/** Fetch a user's company/organization name */
-export async function getUserOrg(userId: string): Promise<string> {
-  await dbConnect();
-  const user = await User.findById(userId);
-  return user?.company || "SoloTenant";
-}
-
-/** Fetch a user's profile detail (e.g. name, role, company) */
-export async function getUserInfo(userId: string) {
-  await dbConnect();
-  const user = await User.findById(userId).select("name role company");
-  if (!user) throw new Error("USER_NOT_FOUND");
-  return user;
-}
-
 /** Write to the security audit log */
 export async function logAudit(
   userId: string,
@@ -80,8 +65,8 @@ export async function sendEmailNotification(
     return;
   }
 
-  const apiKey = envConfig.RESEND_API_KEY;
-  const fromAddress = envConfig.EMAIL_FROM;
+  const apiKey = envConfig.email.resendApiKey;
+  const fromAddress = envConfig.email.from;
 
   if (apiKey) {
     // ── Live dispatch via Resend transport ──────────────────────────────────

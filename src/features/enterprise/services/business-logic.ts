@@ -299,7 +299,7 @@ export async function afterTaskCreated(userId: string, task: TaskEventDoc) {
 
 export async function afterTaskUpdated(
   userId: string,
-  oldTask: TaskEventDoc,
+  _oldTask: TaskEventDoc,
   newTask: TaskEventDoc
 ) {
   const user = await User.findById(userId);

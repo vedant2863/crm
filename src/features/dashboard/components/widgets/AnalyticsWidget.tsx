@@ -199,7 +199,7 @@ export default function AnalyticsWidget({ className }: { className?: string }) {
                     labelStyle={{ fontWeight: "bold", color: "hsl(var(--foreground))" }}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={45}>
-                    {data.stageData.map((entry, index) => (
+                    {data.stageData.map((_entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Bar>
@@ -234,7 +234,7 @@ export default function AnalyticsWidget({ className }: { className?: string }) {
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          {data.taskData.priorityData.map((entry, index) => (
+                          {data.taskData.priorityData.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -281,7 +281,7 @@ export default function AnalyticsWidget({ className }: { className?: string }) {
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          {data.taskData.statusData.map((entry, index) => (
+                          {data.taskData.statusData.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                           ))}
                         </Pie>

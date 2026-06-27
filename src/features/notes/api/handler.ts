@@ -62,7 +62,7 @@ export async function handleUpdateNote(req: NextRequest, id: string) {
   }
 }
 
-export async function handleDeleteNote(req: NextRequest, id: string) {
+export async function handleDeleteNote(_req: NextRequest, id: string) {
   try {
     const userId = await requireAuth();
     await deleteNote(id, userId);

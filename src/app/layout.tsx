@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { GlobalProviders } from "@/components/providers";
+import { Providers } from "@/components/providers";
 import { Metadata } from "next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -38,8 +38,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} font-sans min-h-screen bg-background text-foreground`}>
-        <GlobalProviders>{children}</GlobalProviders>
+      <body
+        className={`${inter.variable} font-sans min-h-screen bg-background text-foreground`}
+      >
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

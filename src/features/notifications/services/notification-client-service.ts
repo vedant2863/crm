@@ -19,6 +19,7 @@ export interface ClientNotification {
 /** Get recent notifications for the logged-in user */
 export async function fetchNotifications(): Promise<ClientNotification[]> {
   const res = await fetch("/api/notifications");
+  if (res.status === 401) return [];
   if (!res.ok) throw new Error("Failed to fetch notifications");
   const data = await res.json();
   return data.notifications || [];

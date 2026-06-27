@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     };
 
     // 3. Check rolling 24-hour quota — return rate limit error if exceeded
-    const allowed = await hasAiQuota(session.user.id);
+    const allowed = await hasAiQuota(session.user.id, "lead-summary");
     if (!allowed) {
       return NextResponse.json({
         error: "Rolling 24-hour AI quota exceeded. Limit is 5 requests."

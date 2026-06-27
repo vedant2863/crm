@@ -16,12 +16,13 @@ export async function GET(req: NextRequest) {
 
     // Lookup user where first name or company matches subdomain case-insensitively
     const cleanSubdomain = subdomain.trim().toLowerCase();
+    const escapedSubdomain = cleanSubdomain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     
     // Find matching user in the database
     const user = await User.findOne({
       $or: [
-        { name: { $regex: new RegExp("^" + cleanSubdomain, "i") } },
-        { company: { $regex: new RegExp("^" + cleanSubdomain + "$", "i") } },
+        { name: { $regex: new RegExp("^" + escapedSubdomain, "i") } },
+        { company: { $regex: new RegExp("^" + escapedSubdomain + "$", "i") } },
       ],
     }).select("name company");
 

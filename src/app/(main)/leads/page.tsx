@@ -1,11 +1,16 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { useState } from "react";
-import { useSession } from "@/lib/auth/auth-client";
+
 import {
-  Plus, Download, AlertCircle,
-  Users, TrendingUp, DollarSign, Award
+  Plus,
+  Download,
+  AlertCircle,
+  Users,
+  TrendingUp,
+  DollarSign,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +19,7 @@ import { DEAL_STAGES } from "@/features/deals/constants/deatstage";
 import { DealDialog } from "@/features/deals/components/DealDialog";
 import { CreateDealRequest } from "@/features/deals/services/deal-client-service";
 import toast from "react-hot-toast";
+import { useSession } from "@/lib/auth/auth-client";
 
 // Extracted Subcomponents
 import { LeadKpiCard } from "./components/LeadKpiCard";
@@ -23,7 +29,14 @@ import { LeadCardView } from "./components/LeadCardView";
 import { LeadDetailDrawer } from "./components/LeadDetailDrawer";
 
 // Static options for sources & priorities
-const SOURCES = ["Cold Outreach", "Event", "Social", "Website", "Referral", "Other"];
+const SOURCES = [
+  "Cold Outreach",
+  "Event",
+  "Social",
+  "Website",
+  "Referral",
+  "Other",
+];
 const PRIORITIES = ["low", "medium", "high"];
 
 export default function LeadsPage() {
@@ -34,7 +47,9 @@ export default function LeadsPage() {
   const [selectedStage, setSelectedStage] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [selectedSource, setSelectedSource] = useState<string>("all");
-  const [sortField, setSortField] = useState<"title" | "value" | "createdAt">("createdAt");
+  const [sortField, setSortField] = useState<"title" | "value" | "createdAt">(
+    "createdAt",
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Layout View Mode (Table vs Card/Grid)
@@ -118,9 +133,18 @@ export default function LeadsPage() {
 
   // Bulk Delete
   const handleBulkDelete = async () => {
-    if (!confirm(`Are you sure you want to delete the ${selectedIds.length} selected leads?`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete the ${selectedIds.length} selected leads?`,
+      )
+    )
+      return;
     try {
-      await Promise.all(selectedIds.map(id => fetch(`/api/deals/${id}`, { method: "DELETE" })));
+      await Promise.all(
+        selectedIds.map((id) =>
+          fetch(`/api/deals/${id}`, { method: "DELETE" }),
+        ),
+      );
       toast.success("Selected leads deleted successfully");
       setSelectedIds([]);
       refetch();
@@ -164,7 +188,7 @@ export default function LeadsPage() {
         body: JSON.stringify({
           dealId: selectedLead._id,
           purpose: emailPurpose,
-          tone: emailTone
+          tone: emailTone,
         }),
       });
       if (!res.ok) {
@@ -186,18 +210,22 @@ export default function LeadsPage() {
   };
 
   // Filter Local Logic
-  const filteredLeads = rawDeals.filter(lead => {
+  const filteredLeads = rawDeals.filter((lead) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       lead.title.toLowerCase().includes(term) ||
       (lead.contactName && lead.contactName.toLowerCase().includes(term)) ||
       (lead.company && lead.company.toLowerCase().includes(term));
 
-    const matchesStage = selectedStage === "all" || lead.stage === selectedStage;
-    const matchesPriority = selectedPriority === "all" || lead.priority === selectedPriority;
+    const matchesStage =
+      selectedStage === "all" || lead.stage === selectedStage;
+    const matchesPriority =
+      selectedPriority === "all" || lead.priority === selectedPriority;
 
-    const leadSource = lead.tags && lead.tags.length > 0 ? lead.tags[0] : "Other";
-    const matchesSource = selectedSource === "all" || leadSource === selectedSource;
+    const leadSource =
+      lead.tags && lead.tags.length > 0 ? lead.tags[0] : "Other";
+    const matchesSource =
+      selectedSource === "all" || leadSource === selectedSource;
 
     return matchesSearch && matchesStage && matchesPriority && matchesSource;
   });
@@ -231,8 +259,8 @@ export default function LeadsPage() {
 
   // Selection toggle
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -240,7 +268,7 @@ export default function LeadsPage() {
     if (selectedIds.length === sortedLeads.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(sortedLeads.map(l => l._id));
+      setSelectedIds(sortedLeads.map((l) => l._id));
     }
   };
 
@@ -250,8 +278,18 @@ export default function LeadsPage() {
       toast.error("No data to export");
       return;
     }
-    const headers = ["Title", "Value", "Stage", "Priority", "Source", "Contact Name", "Company", "Expected Close Date", "Created Date"];
-    const rows = sortedLeads.map(lead => {
+    const headers = [
+      "Title",
+      "Value",
+      "Stage",
+      "Priority",
+      "Source",
+      "Contact Name",
+      "Company",
+      "Expected Close Date",
+      "Created Date",
+    ];
+    const rows = sortedLeads.map((lead) => {
       const source = lead.tags && lead.tags.length > 0 ? lead.tags[0] : "Other";
       return [
         `"${lead.title.replace(/"/g, '""')}"`,
@@ -261,18 +299,24 @@ export default function LeadsPage() {
         source,
         `"${(lead.contactName || "").replace(/"/g, '""')}"`,
         `"${(lead.company || "").replace(/"/g, '""')}"`,
-        lead.expectedCloseDate ? new Date(lead.expectedCloseDate).toISOString().split('T')[0] : "TBD",
-        new Date(lead.createdAt).toISOString().split('T')[0]
+        lead.expectedCloseDate
+          ? new Date(lead.expectedCloseDate).toISOString().split("T")[0]
+          : "TBD",
+        new Date(lead.createdAt).toISOString().split("T")[0],
       ];
     });
 
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `crm_leads_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      "download",
+      `crm_leads_export_${new Date().toISOString().split("T")[0]}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -290,11 +334,15 @@ export default function LeadsPage() {
           <Skeleton className="h-10 w-32" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-2xl" />
+          ))}
         </div>
         <Skeleton className="h-20 w-full rounded-xl" />
         <div className="space-y-4">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
         </div>
       </div>
     );
@@ -305,7 +353,9 @@ export default function LeadsPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Authentication Required</h1>
-          <p className="text-muted-foreground">Please log in to manage your leads.</p>
+          <p className="text-muted-foreground">
+            Please log in to manage your leads.
+          </p>
         </div>
       </div>
     );
@@ -326,24 +376,39 @@ export default function LeadsPage() {
 
   // Calculate Metrics
   const totalLeads = rawDeals.length;
-  const openPipelineValue = rawDeals.filter(d => !["won", "lost"].includes(d.stage)).reduce((sum, d) => sum + d.value, 0);
-  const wonValue = rawDeals.filter(d => d.stage === "won").reduce((sum, d) => sum + d.value, 0);
-  const avgDealSize = totalLeads > 0 ? Math.round(rawDeals.reduce((sum, d) => sum + d.value, 0) / totalLeads) : 0;
+  const openPipelineValue = rawDeals
+    .filter((d) => !["won", "lost"].includes(d.stage))
+    .reduce((sum, d) => sum + d.value, 0);
+  const wonValue = rawDeals
+    .filter((d) => d.stage === "won")
+    .reduce((sum, d) => sum + d.value, 0);
+  const avgDealSize =
+    totalLeads > 0
+      ? Math.round(rawDeals.reduce((sum, d) => sum + d.value, 0) / totalLeads)
+      : 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground mt-1">Track and qualify every opportunity.</p>
+          <p className="text-muted-foreground mt-1">
+            Track and qualify every opportunity.
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={exportCSV} className="rounded-full">
+          <Button
+            variant="outline"
+            onClick={exportCSV}
+            className="rounded-full"
+          >
             <Download className="h-4 w-4 mr-2" /> Export
           </Button>
-          <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
+          <Button
+            onClick={() => handleOpenDialog()}
+            className="shadow-lg hover:shadow-xl transition-all"
+          >
             <Plus className="h-4 w-4 mr-2" /> Add lead
           </Button>
         </div>
@@ -351,10 +416,34 @@ export default function LeadsPage() {
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <LeadKpiCard label="Total leads" value={totalLeads} subtitle="All time" icon={Users} accent="#3b82f6" />
-        <LeadKpiCard label="Open pipeline" value={`$${(openPipelineValue / 1000000).toFixed(1)}M`} subtitle="Active opportunities" icon={TrendingUp} accent="#10b981" />
-        <LeadKpiCard label="Won value" value={`$${(wonValue / 1000).toFixed(0)}K`} subtitle="Completed revenue" icon={Award} accent="#f59e0b" />
-        <LeadKpiCard label="Avg deal size" value={`$${(avgDealSize / 1000).toFixed(1)}K`} subtitle="Average value" icon={DollarSign} accent="#8b5cf6" />
+        <LeadKpiCard
+          label="Total leads"
+          value={totalLeads}
+          subtitle="All time"
+          icon={Users}
+          accent="#3b82f6"
+        />
+        <LeadKpiCard
+          label="Open pipeline"
+          value={`$${(openPipelineValue / 1000000).toFixed(1)}M`}
+          subtitle="Active opportunities"
+          icon={TrendingUp}
+          accent="#10b981"
+        />
+        <LeadKpiCard
+          label="Won value"
+          value={`$${(wonValue / 1000).toFixed(0)}K`}
+          subtitle="Completed revenue"
+          icon={Award}
+          accent="#f59e0b"
+        />
+        <LeadKpiCard
+          label="Avg deal size"
+          value={`$${(avgDealSize / 1000).toFixed(1)}K`}
+          subtitle="Average value"
+          icon={DollarSign}
+          accent="#8b5cf6"
+        />
       </div>
 
       {/* Filters and Controls */}

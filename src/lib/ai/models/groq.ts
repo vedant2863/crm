@@ -31,8 +31,8 @@ export class GroqProvider implements AIProvider {
   private readonly model: string;
 
   constructor() {
-    const key = envConfig.GROQ_API_KEY;
-    this.model = envConfig.GROQ_MODEL;
+    const key = envConfig.ai.groq.apiKey;
+    this.model = envConfig.ai.groq.model;
     this.hasKey = !!key;
     this.client = this.hasKey ? new Groq({ apiKey: key }) : null;
   }

@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import dbConnect from "@/lib/dbConnect";
 import Note, { INote } from "@/models/note";
+import "@/models/deal";
 import mongoose from "mongoose";
 
 interface GetNotesParams {
@@ -47,7 +48,7 @@ export async function createNote(userId: string, data: Partial<INote>) {
 export async function updateNote(noteId: string, userId: string, data: Partial<INote>) {
   await dbConnect();
   const query = { _id: noteId, userId };
-  
+
   const updateData = { ...data };
   if (data.dealId) {
     updateData.dealId = new mongoose.Types.ObjectId(data.dealId as any);

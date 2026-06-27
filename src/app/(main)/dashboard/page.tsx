@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";

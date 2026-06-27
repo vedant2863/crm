@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "@/lib/auth/auth-client";
+
 import { Plus, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,18 +13,22 @@ import { TaskDialog } from "@/features/tasks/components/TaskDialog";
 import { TaskBoard } from "@/features/tasks/components/TaskBoard";
 import { CreateTaskRequest } from "@/features/tasks/services/task-client-service";
 import toast from "react-hot-toast";
+import { useSession } from "@/lib/auth/auth-client";
 
-const TASK_STATUSES: { key: "pending" | "in_progress" | "completed" | "cancelled"; label: string }[] = [
-  { key: 'pending', label: 'Pending' },
-  { key: 'in_progress', label: 'In Progress' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'cancelled', label: 'Cancelled' }
+const TASK_STATUSES: {
+  key: "pending" | "in_progress" | "completed" | "cancelled";
+  label: string;
+}[] = [
+  { key: "pending", label: "Pending" },
+  { key: "in_progress", label: "In Progress" },
+  { key: "completed", label: "Completed" },
+  { key: "cancelled", label: "Cancelled" },
 ];
 
 const PRIORITY_LEVELS = [
-  { key: 'low', label: 'Low' },
-  { key: 'medium', label: 'Medium' },
-  { key: 'high', label: 'High' }
+  { key: "low", label: "Low" },
+  { key: "medium", label: "Medium" },
+  { key: "high", label: "High" },
 ];
 
 export default function TasksPage() {
@@ -36,19 +40,12 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "board">("board");
 
-  const {
-    tasks,
-    loading,
-    error,
-    createTask,
-    updateTask,
-    deleteTask,
-    refetch,
-  } = useTasks({
-    search: searchTerm,
-    status: selectedStatus,
-    priority: selectedPriority,
-  });
+  const { tasks, loading, error, createTask, updateTask, deleteTask, refetch } =
+    useTasks({
+      search: searchTerm,
+      status: selectedStatus,
+      priority: selectedPriority,
+    });
 
   const handleOpenDialog = (task: Task | null = null) => {
     setEditingTask(task);
@@ -75,7 +72,7 @@ export default function TasksPage() {
   };
 
   const handleToggleStatus = async (taskId: string) => {
-    const task = tasks.find(t => t._id === taskId);
+    const task = tasks.find((t) => t._id === taskId);
     if (!task) return;
     const nextStatus = task.status === "completed" ? "pending" : "completed";
     try {
@@ -85,16 +82,19 @@ export default function TasksPage() {
         console.log(err);
         toast.error(err.message);
       } else {
-
         toast.error("Failed to update status");
       }
     }
   };
 
-  const handleMoveStatus = async (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => {
+  const handleMoveStatus = async (
+    taskId: string,
+    newStatus: "pending" | "in_progress" | "completed" | "cancelled",
+  ) => {
     try {
       await updateTask(taskId, { status: newStatus });
-      const statusLabel = TASK_STATUSES.find(s => s.key === newStatus)?.label || newStatus;
+      const statusLabel =
+        TASK_STATUSES.find((s) => s.key === newStatus)?.label || newStatus;
       toast.success(`Moved to ${statusLabel}`);
     } catch (err) {
       if (err instanceof Error) {
@@ -115,7 +115,6 @@ export default function TasksPage() {
         console.log(err);
         toast.error(err.message);
       } else {
-
         toast.error("Failed to delete task");
       }
     }
@@ -132,11 +131,15 @@ export default function TasksPage() {
           <Skeleton className="h-10 w-32" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-2xl" />
+          ))}
         </div>
         <Skeleton className="h-20 w-full rounded-xl" />
         <div className="space-y-4">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
         </div>
       </div>
     );
@@ -147,7 +150,9 @@ export default function TasksPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Authentication Required</h1>
-          <p className="text-muted-foreground">Please log in to manage your tasks.</p>
+          <p className="text-muted-foreground">
+            Please log in to manage your tasks.
+          </p>
         </div>
       </div>
     );
@@ -166,14 +171,17 @@ export default function TasksPage() {
     );
   }
 
-  const getCount = (statusKey: string) => tasks.filter(t => t.status === statusKey).length;
+  const getCount = (statusKey: string) =>
+    tasks.filter((t) => t.status === statusKey).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-muted-foreground mt-1">Manage your activities and stay productive.</p>
+          <p className="text-muted-foreground mt-1">
+            Manage your activities and stay productive.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex border rounded-full p-1 bg-muted/30">
@@ -194,7 +202,10 @@ export default function TasksPage() {
               List
             </Button>
           </div>
-          <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
+          <Button
+            onClick={() => handleOpenDialog()}
+            className="shadow-lg hover:shadow-xl transition-all"
+          >
             <Plus className="h-4 w-4 mr-2" /> Add Task
           </Button>
         </div>
@@ -202,9 +213,9 @@ export default function TasksPage() {
 
       <TaskStats
         total={tasks.length}
-        pending={getCount('pending')}
-        inProgress={getCount('in_progress')}
-        completed={getCount('completed')}
+        pending={getCount("pending")}
+        inProgress={getCount("in_progress")}
+        completed={getCount("completed")}
       />
 
       <TaskFilters
@@ -243,7 +254,9 @@ export default function TasksPage() {
             <div className="text-center py-20 bg-card border rounded-2xl border-dashed">
               <CheckCircle2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium">All caught up!</h3>
-              <p className="text-muted-foreground">No tasks found matching your filters.</p>
+              <p className="text-muted-foreground">
+                No tasks found matching your filters.
+              </p>
             </div>
           )}
         </div>
@@ -258,4 +271,3 @@ export default function TasksPage() {
     </div>
   );
 }
-

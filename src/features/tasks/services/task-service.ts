@@ -7,6 +7,8 @@
 import dbConnect from "@/lib/dbConnect";
 import Task from "@/models/task";
 import User from "@/models/user";
+import "@/models/contact";
+import "@/models/deal";
 import { FilterQuery } from "mongoose";
 import {
   afterTaskCreated,

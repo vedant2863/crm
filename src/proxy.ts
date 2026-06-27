@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
   // 3. Retrieve NextAuth session token
   const token = await getToken({
     req: request,
-    secret: envConfig.NEXTAUTH_SECRET,
+    secret: envConfig.auth.secret,
   });
 
   // 4. Redirect unauthenticated users to /login

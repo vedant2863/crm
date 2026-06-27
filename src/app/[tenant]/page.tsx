@@ -15,10 +15,11 @@ export default async function TenantPage({ params }: Props) {
 
   // Find user matching tenant name or company name case-insensitively
   const cleanTenant = tenant.toLowerCase();
+  const escapedTenant = cleanTenant.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const tenantUser = await User.findOne({
     $or: [
-      { name: { $regex: new RegExp("^" + cleanTenant, "i") } },
-      { company: { $regex: new RegExp("^" + cleanTenant + "$", "i") } },
+      { name: { $regex: new RegExp("^" + escapedTenant, "i") } },
+      { company: { $regex: new RegExp("^" + escapedTenant + "$", "i") } },
     ],
   }).select("name company avatar bio");
 

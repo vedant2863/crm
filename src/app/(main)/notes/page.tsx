@@ -1,11 +1,20 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "@/lib/auth/auth-client";
+
 import {
-  Pin, Trash2, Edit, Plus, Search, Calendar, Link2,
-  StickyNote, AlertCircle, RefreshCw, X
+  Pin,
+  Trash2,
+  Edit,
+  Plus,
+  Search,
+  Calendar,
+  Link2,
+  StickyNote,
+  AlertCircle,
+  Table,
+  Grid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +28,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
+import { useSession } from "@/lib/auth/auth-client";
+import { cn } from "@/lib/utils";
 
 interface Note {
   _id: string;
@@ -42,6 +53,7 @@ interface Deal {
 
 export default function NotesPage() {
   const { status } = useSession();
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [notes, setNotes] = useState<Note[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +96,9 @@ export default function NotesPage() {
   useEffect(() => {
     if (status === "authenticated") {
       setLoading(true);
-      Promise.all([fetchNotes(), fetchDeals()]).finally(() => setLoading(false));
+      Promise.all([fetchNotes(), fetchDeals()]).finally(() =>
+        setLoading(false),
+      );
     }
   }, [status, fetchNotes, fetchDeals]);
 
@@ -187,7 +201,9 @@ export default function NotesPage() {
           <Skeleton className="h-10 w-32" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-44 rounded-3xl" />)}
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-44 rounded-3xl" />
+          ))}
         </div>
       </div>
     );
@@ -198,7 +214,9 @@ export default function NotesPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Authentication Required</h1>
-          <p className="text-muted-foreground">Please log in to access notes.</p>
+          <p className="text-muted-foreground">
+            Please log in to access notes.
+          </p>
         </div>
       </div>
     );
@@ -217,83 +235,203 @@ export default function NotesPage() {
     );
   }
 
-  const pinnedNotes = notes.filter(n => n.pinned);
-  const otherNotes = notes.filter(n => !n.pinned);
+  const pinnedNotes = notes.filter((n) => n.pinned);
+  const otherNotes = notes.filter((n) => !n.pinned);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Notes</h1>
-          <p className="text-muted-foreground mt-1">Keep track of client discussions and lead context.</p>
+          <p className="text-muted-foreground mt-1">
+            Keep track of client discussions and lead context.
+          </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="shadow-lg hover:shadow-xl transition-all">
+        <Button
+          onClick={() => handleOpenDialog()}
+          className="shadow-lg hover:shadow-xl transition-all"
+        >
           <Plus className="h-4 w-4 mr-2" /> Add Note
         </Button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search notes title or content..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search & Toggle row */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card border rounded-3xl p-4 shadow-sm">
+        <div className="relative flex-1 w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search notes title or content..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-background"
+          />
+        </div>
+        <div className="flex items-center gap-1 border p-1 rounded-full bg-muted/30 shrink-0 self-stretch md:self-auto justify-center">
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+            className="rounded-full h-8"
+          >
+            <Grid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "table" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("table")}
+            className="rounded-full h-8"
+          >
+            <Table className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Pinned Section */}
-      {pinnedNotes.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <Pin className="h-3 w-3 fill-current rotate-45" /> Pinned Notes
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-            {pinnedNotes.map((note) => (
-              <NoteCard
-                key={note._id}
-                note={note}
-                onEdit={handleOpenDialog}
-                onDelete={handleDelete}
-                onTogglePin={handleTogglePin}
-              />
-            ))}
+      {viewMode === "grid" ? (
+        <>
+          {/* Pinned Section */}
+          {pinnedNotes.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Pin className="h-3 w-3 fill-current rotate-45" /> Pinned Notes
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                {pinnedNotes.map((note) => (
+                  <NoteCard
+                    key={note._id}
+                    note={note}
+                    onEdit={handleOpenDialog}
+                    onDelete={handleDelete}
+                    onTogglePin={handleTogglePin}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other Notes Section */}
+          <div className="space-y-3">
+            {pinnedNotes.length > 0 && otherNotes.length > 0 && (
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Notes
+              </h2>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+              {otherNotes.map((note) => (
+                <NoteCard
+                  key={note._id}
+                  note={note}
+                  onEdit={handleOpenDialog}
+                  onDelete={handleDelete}
+                  onTogglePin={handleTogglePin}
+                />
+              ))}
+            </div>
+
+            {notes.length === 0 && (
+              <div className="text-center py-20 bg-card border rounded-2xl border-dashed">
+                <StickyNote className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No notes found</h3>
+                <p className="text-muted-foreground">
+                  Create notes to keep details structured.
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="bg-card border rounded-3xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b bg-muted/20 font-bold uppercase tracking-wider text-muted-foreground/80">
+                  <th className="p-4 w-10">Pin</th>
+                  <th className="p-4">Title</th>
+                  <th className="p-4">Content</th>
+                  <th className="p-4">Linked Lead</th>
+                  <th className="p-4">Updated</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40 text-left">
+                {notes.map((note) => {
+                  return (
+                    <tr key={note._id} className="hover:bg-muted/15 transition-colors group/row">
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleTogglePin(note)}
+                          className={cn(
+                            "p-1 rounded-full hover:bg-muted text-muted-foreground/40 hover:text-primary transition-all",
+                            note.pinned && "text-primary hover:text-primary/80"
+                          )}
+                        >
+                          <Pin className={cn("h-4 w-4 rotate-45", note.pinned && "fill-current")} />
+                        </button>
+                      </td>
+                      <td className="p-4 font-bold text-foreground max-w-[150px] truncate">
+                        {note.title || <span className="text-muted-foreground italic font-normal">Untitled</span>}
+                      </td>
+                      <td className="p-4 text-muted-foreground max-w-[300px] truncate">
+                        {note.content}
+                      </td>
+                      <td className="p-4">
+                        {note.dealId ? (
+                          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold">
+                            {note.dealId.title}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-muted-foreground font-medium">
+                        {new Date(note.updatedAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDialog(note)}
+                            className="hover:bg-primary/5 hover:text-primary border-border/50 h-7"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive/30 hover:text-destructive h-7"
+                            onClick={() => handleDelete(note._id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {notes.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="text-center p-8 text-muted-foreground font-medium">
+                      No notes found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
-
-      {/* Other Notes Section */}
-      <div className="space-y-3">
-        {pinnedNotes.length > 0 && otherNotes.length > 0 && (
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notes</h2>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-          {otherNotes.map((note) => (
-            <NoteCard
-              key={note._id}
-              note={note}
-              onEdit={handleOpenDialog}
-              onDelete={handleDelete}
-              onTogglePin={handleTogglePin}
-            />
-          ))}
-        </div>
-
-        {notes.length === 0 && (
-          <div className="text-center py-20 bg-card border rounded-2xl border-dashed">
-            <StickyNote className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-medium">No notes found</h3>
-            <p className="text-muted-foreground">Create notes to keep details structured.</p>
-          </div>
-        )}
-      </div>
 
       {/* Add/Edit Modal */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle>{editingNote ? "Edit Note" : "Create Note"}</DialogTitle>
+            <DialogTitle>
+              {editingNote ? "Edit Note" : "Create Note"}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 mt-2">
             <div className="space-y-1.5">
@@ -302,7 +440,9 @@ export default function NotesPage() {
                 id="title"
                 placeholder="Meeting notes, Product feedback..."
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
               />
             </div>
 
@@ -314,7 +454,9 @@ export default function NotesPage() {
                 required
                 placeholder="Type your note content here..."
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
                 className="w-full text-sm p-3 rounded-2xl border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
               />
             </div>
@@ -324,7 +466,9 @@ export default function NotesPage() {
               <select
                 id="dealId"
                 value={formData.dealId}
-                onChange={(e) => setFormData({ ...formData, dealId: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, dealId: e.target.value })
+                }
                 className="w-full text-sm p-3 rounded-2xl border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="">Unlinked (General Note)</option>
@@ -341,19 +485,25 @@ export default function NotesPage() {
                 id="pinned"
                 type="checkbox"
                 checked={formData.pinned}
-                onChange={(e) => setFormData({ ...formData, pinned: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, pinned: e.target.checked })
+                }
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <Label htmlFor="pinned" className="cursor-pointer">Pin this note to the top</Label>
+              <Label htmlFor="pinned" className="cursor-pointer">
+                Pin this note to the top
+              </Label>
             </div>
 
             <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit">
-                Save Note
-              </Button>
+              <Button type="submit">Save Note</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -372,7 +522,6 @@ interface NoteCardProps {
 function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
   return (
     <div className="group relative bg-card border rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 flex flex-col gap-3 min-h-[140px]">
-
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-bold text-sm text-foreground">
@@ -410,13 +559,13 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
 
       {/* Footer Details */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 mt-1 text-[10px] text-muted-foreground">
-
         {/* Linked Lead Info */}
         {note.dealId ? (
           <div className="flex items-center gap-1 max-w-[60%] text-primary font-bold">
             <Link2 className="h-3 w-3 shrink-0" />
             <span className="truncate" title={note.dealId.title}>
-              {note.dealId.title} {note.dealId.company ? `(${note.dealId.company})` : ""}
+              {note.dealId.title}{" "}
+              {note.dealId.company ? `(${note.dealId.company})` : ""}
             </span>
           </div>
         ) : (
@@ -426,7 +575,9 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
         {/* Date */}
         <div className="flex items-center gap-1">
           <Calendar className="h-3 w-3" />
-          <span>{new Date(note.updatedAt || note.createdAt).toLocaleDateString()}</span>
+          <span>
+            {new Date(note.updatedAt || note.createdAt).toLocaleDateString()}
+          </span>
         </div>
       </div>
     </div>

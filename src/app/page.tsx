@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "@/lib/auth/auth-client";
 import { useState } from "react";
-import { useTheme } from "@/components/providers";
 import {
   ArrowRight,
   Shield,
@@ -24,6 +22,8 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/contexts/theme-context";
+import { useSession } from "@/lib/auth/auth-client";
 
 /* =========================================================
    MAIN LANDING PAGE
@@ -66,13 +66,22 @@ function Navbar() {
         <Logo />
 
         <nav className="hidden md:flex items-center gap-10 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          <Link href="#playground" className="hover:text-foreground transition-all">
+          <Link
+            href="#playground"
+            className="hover:text-foreground transition-all"
+          >
             Live Sandbox
           </Link>
-          <Link href="#features" className="hover:text-foreground transition-all">
+          <Link
+            href="#features"
+            className="hover:text-foreground transition-all"
+          >
             Features
           </Link>
-          <Link href="#pricing" className="hover:text-foreground transition-all">
+          <Link
+            href="#pricing"
+            className="hover:text-foreground transition-all"
+          >
             Pricing
           </Link>
         </nav>
@@ -127,29 +136,44 @@ function HeroSection() {
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-8 animate-fade-in">
-          <Sparkles className="h-3 w-3 fill-current animate-spin" style={{ animationDuration: '3s' }} />
+          <Sparkles
+            className="h-3 w-3 fill-current animate-spin"
+            style={{ animationDuration: "3s" }}
+          />
           CRM OS Enterprise Collaborative Suite
         </div>
 
         <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-tight">
           Supercharge Customer <br className="hidden md:inline" />
-          Relationships with <span className="text-primary bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent italic">Intelligence.</span>
+          Relationships with{" "}
+          <span className="text-primary bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent italic">
+            Intelligence.
+          </span>
         </h1>
 
         <p className="max-w-3xl mx-auto text-muted-foreground text-lg sm:text-xl mb-12 leading-relaxed">
-          Manage dynamic organization-wide contacts, drag-and-drop Kanban pipelines,
-          real-time SMTP logs, and automatic subdomain rewrites. Fully responsive, secure,
-          and collaborative for modern businesses.
+          Manage dynamic organization-wide contacts, drag-and-drop Kanban
+          pipelines, real-time SMTP logs, and automatic subdomain rewrites.
+          Fully responsive, secure, and collaborative for modern businesses.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-sm mx-auto sm:max-w-none">
-          <Button asChild size="lg" className="w-full sm:w-auto shadow-xl shadow-primary/15">
+          <Button
+            asChild
+            size="lg"
+            className="w-full sm:w-auto shadow-xl shadow-primary/15"
+          >
             <Link href="/register">
               Create Free Account <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
 
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+          >
             <Link href="#playground">Try Live Sandbox</Link>
           </Button>
         </div>
@@ -167,7 +191,11 @@ function InteractivePlayground() {
   const [logs, setLogs] = useState<string[]>([
     "🟢 System initialized. Standing by for deal activity...",
   ]);
-  const [notification, setNotification] = useState<{ title: string; desc: string; type: string } | null>(null);
+  const [notification, setNotification] = useState<{
+    title: string;
+    desc: string;
+    type: string;
+  } | null>(null);
 
   const triggerTransition = () => {
     if (stage === "Proposal") {
@@ -195,15 +223,20 @@ function InteractivePlayground() {
   };
 
   return (
-    <section id="playground" className="py-20 bg-muted/20 border-y border-border/30 relative overflow-hidden">
+    <section
+      id="playground"
+      className="py-20 bg-muted/20 border-y border-border/30 relative overflow-hidden"
+    >
       <div className="container mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl sm:text-5xl font-black mb-4">
-            Experience the <span className="text-primary">Collaborative Engine</span>
+            Experience the{" "}
+            <span className="text-primary">Collaborative Engine</span>
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Test the live simulator below. Toggle the deal pipeline stage to see SMTP notifications,
-            organization activity feeds, and security audit logs dynamically synchronize.
+            Test the live simulator below. Toggle the deal pipeline stage to see
+            SMTP notifications, organization activity feeds, and security audit
+            logs dynamically synchronize.
           </p>
         </div>
 
@@ -228,25 +261,43 @@ function InteractivePlayground() {
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Acme Corporation
                   </span>
-                  <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${stage === "Won" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-primary/10 text-primary border border-primary/20"
-                    }`}>
+                  <span
+                    className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                      stage === "Won"
+                        ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                        : "bg-primary/10 text-primary border border-primary/20"
+                    }`}
+                  >
                     {stage}
                   </span>
                 </div>
-                <h4 className="text-2xl font-black tracking-tight mb-1">$120,000</h4>
-                <p className="text-[11px] text-muted-foreground mb-4">Enterprise CRM Suite contract</p>
+                <h4 className="text-2xl font-black tracking-tight mb-1">
+                  $120,000
+                </h4>
+                <p className="text-[11px] text-muted-foreground mb-4">
+                  Enterprise CRM Suite contract
+                </p>
 
                 {/* Simulated Owner */}
                 <div className="flex items-center gap-2 pt-3 border-t border-border/30">
-                  <div className="w-6 h-6 rounded-full bg-primary/30 flex items-center justify-center text-[10px] font-bold">JD</div>
-                  <span className="text-[11px] text-muted-foreground">Owned by John Doe (Admin)</span>
+                  <div className="w-6 h-6 rounded-full bg-primary/30 flex items-center justify-center text-[10px] font-bold">
+                    JD
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">
+                    Owned by John Doe (Admin)
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="mt-8 pt-6 border-t border-border/30">
-              <Button onClick={triggerTransition} className="w-full font-bold shadow-lg shadow-primary/20 group">
-                {stage === "Proposal" ? "Finalize & Win Deal" : "Reset Deal to Negotiation"}
+              <Button
+                onClick={triggerTransition}
+                className="w-full font-bold shadow-lg shadow-primary/20 group"
+              >
+                {stage === "Proposal"
+                  ? "Finalize & Win Deal"
+                  : "Reset Deal to Negotiation"}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
@@ -261,10 +312,16 @@ function InteractivePlayground() {
                   <Bell className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <h5 className="text-sm font-bold text-foreground">{notification.title}</h5>
-                  <p className="text-xs text-muted-foreground">{notification.desc}</p>
+                  <h5 className="text-sm font-bold text-foreground">
+                    {notification.title}
+                  </h5>
+                  <p className="text-xs text-muted-foreground">
+                    {notification.desc}
+                  </p>
                 </div>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Just Now</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  Just Now
+                </span>
               </div>
             )}
 
@@ -276,7 +333,9 @@ function InteractivePlayground() {
                     <span className="w-3 h-3 rounded-full bg-red-500" />
                     <span className="w-3 h-3 rounded-full bg-yellow-500" />
                     <span className="w-3 h-3 rounded-full bg-green-500" />
-                    <span className="text-xs font-bold text-muted-foreground ml-2">Console Monitor</span>
+                    <span className="text-xs font-bold text-muted-foreground ml-2">
+                      Console Monitor
+                    </span>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     Live System Feed
@@ -285,7 +344,10 @@ function InteractivePlayground() {
 
                 <div className="space-y-2.5 overflow-y-auto max-h-[240px] pr-2">
                   {logs.map((log, idx) => (
-                    <div key={idx} className="leading-relaxed animate-fade-in break-words">
+                    <div
+                      key={idx}
+                      className="leading-relaxed animate-fade-in break-words"
+                    >
                       {log}
                     </div>
                   ))}
@@ -293,7 +355,8 @@ function InteractivePlayground() {
               </div>
 
               <div className="pt-3 border-t border-white/10 text-[10px] text-muted-foreground font-sans">
-                Activity records are pushed instantly through custom Mongoose schemas.
+                Activity records are pushed instantly through custom Mongoose
+                schemas.
               </div>
             </div>
           </div>
@@ -376,11 +439,12 @@ function FeaturesSection() {
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
           <h3 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight">
-            Designed for <span className="text-primary">Collaborative Scaling</span>
+            Designed for{" "}
+            <span className="text-primary">Collaborative Scaling</span>
           </h3>
           <p className="max-w-2xl mx-auto text-muted-foreground text-sm sm:text-base">
-            CRM OS provides robust features designed to align sales teams, secure records,
-            and automate relationships.
+            CRM OS provides robust features designed to align sales teams,
+            secure records, and automate relationships.
           </p>
         </div>
 
@@ -409,7 +473,9 @@ function FeatureCard({
         <Icon className="h-6 w-6" />
       </div>
       <h4 className="text-xl font-bold mb-3 text-foreground">{title}</h4>
-      <p className="text-sm text-muted-foreground leading-relaxed flex-1">{desc}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+        {desc}
+      </p>
     </div>
   );
 }
@@ -495,11 +561,13 @@ function PricingSection() {
       <div className="container mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h3 className="text-4xl sm:text-5xl font-black mb-4">
-            Transparent, <span className="text-primary">Predictable Pricing</span>
+            Transparent,{" "}
+            <span className="text-primary">Predictable Pricing</span>
           </h3>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Align your team&apos;s workflow, unlock subdomains, and monitor pipeline statistics.
-            Choose the tier that matches your company&apos;s growth rate.
+            Align your team&apos;s workflow, unlock subdomains, and monitor
+            pipeline statistics. Choose the tier that matches your
+            company&apos;s growth rate.
           </p>
         </div>
 
@@ -528,10 +596,11 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`p-8 rounded-3xl border flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${featured
-        ? "border-primary bg-primary/[0.03] shadow-xl shadow-primary/5 scale-105 z-10"
-        : "border-border/50 bg-card"
-        }`}
+      className={`p-8 rounded-3xl border flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+        featured
+          ? "border-primary bg-primary/[0.03] shadow-xl shadow-primary/5 scale-105 z-10"
+          : "border-border/50 bg-card"
+      }`}
     >
       {featured && (
         <div className="absolute top-0 right-0 p-4">
@@ -543,16 +612,25 @@ function PricingCard({
 
       <div>
         <h4 className="text-2xl font-black mb-2 text-foreground">{name}</h4>
-        <p className="text-xs text-muted-foreground mb-6 min-h-[32px]">{desc}</p>
+        <p className="text-xs text-muted-foreground mb-6 min-h-[32px]">
+          {desc}
+        </p>
 
         <div className="flex items-baseline gap-1 mb-8">
-          <span className="text-5xl font-black tracking-tight text-foreground">${price}</span>
-          <span className="text-xs font-bold text-muted-foreground">/ month</span>
+          <span className="text-5xl font-black tracking-tight text-foreground">
+            ${price}
+          </span>
+          <span className="text-xs font-bold text-muted-foreground">
+            / month
+          </span>
         </div>
 
         <ul className="space-y-4 mb-8">
           {features.map((feature, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm text-foreground/90">
+            <li
+              key={i}
+              className="flex items-start gap-3 text-sm text-foreground/90"
+            >
               <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <span>{feature}</span>
             </li>
@@ -560,7 +638,11 @@ function PricingCard({
         </ul>
       </div>
 
-      <Button asChild variant={featured ? "default" : "outline"} className="w-full font-bold">
+      <Button
+        asChild
+        variant={featured ? "default" : "outline"}
+        className="w-full font-bold"
+      >
         <Link href="/register">Get Started Now</Link>
       </Button>
     </div>
@@ -580,17 +662,27 @@ function CTASection() {
 
       <div className="container mx-auto px-6 relative z-10 max-w-4xl">
         <h2 className="text-4xl sm:text-6xl font-black mb-8 leading-tight tracking-tight">
-          Ready to scale with <span className="text-primary italic">intelligence?</span>
+          Ready to scale with{" "}
+          <span className="text-primary italic">intelligence?</span>
         </h2>
         <p className="max-w-2xl mx-auto text-muted-foreground text-sm sm:text-base mb-10 leading-relaxed">
-          Create an enterprise workspace today. Add collaborative teammates, organize your deal streams,
-          and track communications instantly.
+          Create an enterprise workspace today. Add collaborative teammates,
+          organize your deal streams, and track communications instantly.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-sm mx-auto sm:max-w-none">
-          <Button asChild size="lg" className="w-full sm:w-auto shadow-xl shadow-primary/20">
+          <Button
+            asChild
+            size="lg"
+            className="w-full sm:w-auto shadow-xl shadow-primary/20"
+          >
             <Link href="/register">Start for Free</Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
             <Link href="/login">Login to Workspace</Link>
           </Button>
         </div>
@@ -610,7 +702,8 @@ function Footer() {
         <Logo />
 
         <p className="text-xs text-muted-foreground text-center md:text-right">
-          © 2026 CRM OS Inc. All rights reserved. Designed to supercharge workflows.
+          © 2026 CRM OS Inc. All rights reserved. Designed to supercharge
+          workflows.
         </p>
       </div>
     </footer>
@@ -630,7 +723,10 @@ function Logo() {
         </span>
       </div>
       <span className="text-xl font-black tracking-tight text-foreground">
-        CRM<span className="text-primary bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">OS</span>
+        CRM
+        <span className="text-primary bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
+          OS
+        </span>
       </span>
     </div>
   );

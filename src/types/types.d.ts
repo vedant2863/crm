@@ -1,4 +1,3 @@
-/* eslint-disable no-var */
 import { Mongoose } from "mongoose";
 
 declare global {

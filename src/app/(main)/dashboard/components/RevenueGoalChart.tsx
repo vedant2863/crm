@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+
 import { ArrowUpRight } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as ChartTooltip } from "recharts";
 import { Button } from "@/components/ui/button";
-
 interface RevenueGoalChartProps {
   wonValue: number;
   revenueProgressData: any[];
@@ -58,7 +56,7 @@ export function RevenueGoalChart({ wonValue, revenueProgressData }: RevenueGoalC
         <Button onClick={() => window.location.href = "/leads"} className="flex-1 rounded-full font-bold h-9 text-xs">
           + Add Lead
         </Button>
-        <Button onClick={() => window.location.href = "/follow-ups"} variant="outline" className="flex-1 rounded-full font-bold h-9 text-xs">
+        <Button onClick={() => window.location.href = "/follow-ups"} variant="outline" className="flex-1 roundedfull font-bold h-9 text-xs">
           Task
         </Button>
       </div>

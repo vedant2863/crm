@@ -51,7 +51,7 @@ export async function handleMarkAllAsRead() {
 }
 
 export async function handleMarkAsRead(
-  req: NextRequest,
+  _req: NextRequest,
   id: string
 ) {
   try {

@@ -1,4 +1,3 @@
-import React from "react";
 import { ArrowUpDown, Edit, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Deal } from "@/features/deals";

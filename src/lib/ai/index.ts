@@ -24,7 +24,7 @@ export class AIManager {
   private activeProvider: AIProvider;
 
   private constructor() {
-    const name = envConfig.AI_PROVIDER;
+    const name = envConfig.ai.provider;
 
     if (name === "groq") {
       this.activeProvider = new GroqProvider();

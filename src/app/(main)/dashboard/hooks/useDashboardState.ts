@@ -1,9 +1,9 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "@/lib/auth/auth-client";
 import toast from "react-hot-toast";
+import { useSession } from "@/lib/auth/auth-client";
 
 export function useDashboardState() {
   const { data: session, status } = useSession();
@@ -23,13 +23,19 @@ export function useDashboardState() {
   const AI_REFRESH_LIMIT = 5;
 
   // UI state toggles
-  const [engagementPeriod, setEngagementPeriod] = useState<"Monthly" | "Annually">("Monthly");
+  const [engagementPeriod, setEngagementPeriod] = useState<
+    "Monthly" | "Annually"
+  >("Monthly");
 
   // Fetch Dashboard Database Aggregations
   const fetchDashboardData = useCallback(async () => {
     try {
       setDbLoading(true);
       const res = await fetch("/api/dashboard");
+      if (res.status === 401) {
+        setDbData(null);
+        return;
+      }
       if (!res.ok) throw new Error("Failed to load dashboard data");
       const data = await res.json();
       setDbData(data);
@@ -44,13 +50,20 @@ export function useDashboardState() {
   const fetchAiInsights = useCallback(async (force = false) => {
     setAiLoading(true);
     try {
-      const url = force ? "/api/ai/sales-insights?force=true" : "/api/ai/sales-insights";
+      const url = force
+        ? "/api/ai/sales-insights?force=true"
+        : "/api/ai/sales-insights";
       const res = await fetch(url);
+      if (res.status === 401) {
+        setAiInsights(null);
+        return;
+      }
       if (!res.ok) throw new Error("Failed to generate AI insights");
       const data = await res.json();
-      const providerName = data.provider === "Gemini (with Groq Fallback)" ? null : data.provider;
+      const providerName =
+        data.provider === "Gemini (with Groq Fallback)" ? null : data.provider;
       if (data.provider) setAiProvider(providerName);
-      
+
       if (data.remaining !== undefined) {
         setAiRefreshCount(AI_REFRESH_LIMIT - data.remaining);
       }

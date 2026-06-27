@@ -25,10 +25,6 @@ export interface CreateDealRequest {
   priority?: "low" | "medium" | "high";
 }
 
-export interface UpdateDealRequest extends CreateDealRequest {
-  _id: string;
-}
-
 class DealService {
   private baseUrl = "/api/deals";
 

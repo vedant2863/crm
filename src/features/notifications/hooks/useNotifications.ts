@@ -73,4 +73,4 @@ export function useNotifications() {
     refresh: () => loadNotifications(false),
   };
 }
-export default useNotifications;
+
