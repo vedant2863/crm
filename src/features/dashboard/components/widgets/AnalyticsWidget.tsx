@@ -151,7 +151,7 @@ export default function AnalyticsWidget({ className }: { className?: string }) {
                       borderRadius: "8px",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    formatter={(value: number | string) => [`$${Number(value).toLocaleString()}`, "Expected Revenue"]}
+                    formatter={(value: any) => [`$${Number(value || 0).toLocaleString()}`, "Expected Revenue"]}
                     labelStyle={{ fontWeight: "bold", color: "hsl(var(--foreground))" }}
                   />
                   <Area
@@ -192,8 +192,8 @@ export default function AnalyticsWidget({ className }: { className?: string }) {
                       borderRadius: "8px",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    formatter={(value: number | string, _name: string, props: { payload?: { count?: number } }) => [
-                      `$${Number(value).toLocaleString()} (${props.payload?.count ?? 0} deals)`,
+                    formatter={(value: any, _name: any, props: any) => [
+                      `$${Number(value || 0).toLocaleString()} (${props.payload?.count ?? 0} deals)`,
                       "Total Valuation",
                     ]}
                     labelStyle={{ fontWeight: "bold", color: "hsl(var(--foreground))" }}

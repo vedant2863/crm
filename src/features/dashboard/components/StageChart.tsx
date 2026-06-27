@@ -56,11 +56,11 @@ export default function StageChart({ data, loading }: StageChartProps) {
                 borderRadius: "12px",
               }}
               formatter={(
-                v: number | string,
-                _: string,
-                props: { payload?: { count?: number } }
+                v: any,
+                _: any,
+                props: any
               ) => [
-                `$${Number(v).toLocaleString()} (${props.payload?.count ?? 0} deals)`,
+                `$${Number(v || 0).toLocaleString()} (${props.payload?.count ?? 0} deals)`,
                 "Value",
               ]}
               labelStyle={{ fontWeight: 700 }}

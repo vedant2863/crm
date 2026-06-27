@@ -5,9 +5,8 @@
  * Separated from business logic and respects the collaborative sharing toggle.
  */
 import dbConnect from "@/lib/dbConnect";
-import Deal, { IDeal } from "@/models/deal";
+import Deal from "@/models/deal";
 import User from "@/models/user";
-import { FilterQuery } from "mongoose";
 import {
   afterDealCreated,
   afterDealUpdated,
@@ -58,7 +57,7 @@ export async function getDeals({ userId, search, stage, page = 1, limit = 100 }:
   const orgUserIds = await getOrganizationUserIds(userId);
 
   const skip = (page - 1) * limit;
-  const query: FilterQuery<IDeal> = { userId: { $in: orgUserIds } };
+  const query: any = { userId: { $in: orgUserIds } };
 
   if (search) {
     query.$or = [

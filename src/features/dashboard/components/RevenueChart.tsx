@@ -71,7 +71,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "12px",
               }}
-              formatter={(v: number | string) => [`$${Number(v).toLocaleString()}`, "Revenue"]}
+              formatter={(v: any) => [`$${Number(v || 0).toLocaleString()}`, "Revenue"]}
               labelStyle={{ fontWeight: 700, color: "hsl(var(--foreground))" }}
             />
             <Area

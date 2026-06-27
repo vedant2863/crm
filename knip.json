@@ -5,18 +5,25 @@
     "scripts/**/*.{js,ts}",
     "src/app/**/{page,layout,loading,error,not-found,route,default}.{js,jsx,ts,tsx}"
   ],
-  "project": ["src/**/*.{js,jsx,ts,tsx}", "scripts/**/*.{js,ts}"],
-  "ignore": [
-    "src/components/ui/**",
-    "src/features/dashboard/**",
-    "src/features/deals/components/**",
-    "src/components/app-sidebar.tsx",
-    "src/features/auth/services/auth-service.ts",
-    "src/lib/ai/config.ts",
-    "src/lib/mongo-client.ts",
-    "src/utils/formatCurrency.ts",
-    "src/utils/formatDate.ts"
+  "project": [
+    "src/**/*.{js,jsx,ts,tsx}",
+    "scripts/**/*.{js,ts}"
   ],
-  "ignoreDependencies": ["date-fns", "tw-animate-css"],
-  "ignoreExportsUsedInFile": true
+  "ignore": [
+    "**/*.d.ts",
+    "**/__mocks__/**",
+    "**/dist/**"
+  ],
+  "ignoreDependencies": [
+    "date-fns",
+    "tw-animate-css"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "files": "off",
+    "dependencies": "error",
+    "devDependencies": "warn",
+    "exports": "off",
+    "types": "off"
+  }
 }

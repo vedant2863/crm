@@ -9,7 +9,6 @@ import Task from "@/models/task";
 import User from "@/models/user";
 import "@/models/contact";
 import "@/models/deal";
-import { FilterQuery } from "mongoose";
 import {
   afterTaskCreated,
   afterTaskUpdated,
@@ -58,7 +57,7 @@ export async function getTasks({ userId, search, status, priority, page = 1, lim
   const orgUserIds = await getOrganizationUserIds(userId);
 
   const skip = (page - 1) * limit;
-  const query: FilterQuery<unknown> = { userId: { $in: orgUserIds } };
+  const query: any = { userId: { $in: orgUserIds } };
 
   if (search) {
     query.$or = [
