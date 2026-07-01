@@ -19,6 +19,7 @@
 > **Local Server URL** → [http://localhost:3000](http://localhost:3000)
 >
 > **Demo Credentials**
+>
 > - **Email**: `vedantjadhav880@gmail.com`
 > - **Password**: `vedantjadhav880`
 
@@ -27,12 +28,15 @@
 ## ✨ Key Features & Enhancements
 
 ### 1. 🔐 User Authentication
+
 - Credential-based secure registration & login using **NextAuth.js** and **bcrypt** password hashing.
 - Protected routes and automatic session recovery on page refreshes.
 - Strict multi-tenant security isolating all records (`contacts`, `deals`, `notes`, `tasks`) by `userId`.
 
 ### 2. 📊 Restructured AI CRM Dashboard
+
 Designed as a modern 3-column dashboard matching premium SaaS interfaces:
+
 - **Left Column**:
   - *Pipeline Goal*: Glassmorphic credit-card style widget visualizing total pipeline value.
   - *Weekly Revenue*: Closed-won revenue tracking with an upward percentage indicator.
@@ -46,6 +50,7 @@ Designed as a modern 3-column dashboard matching premium SaaS interfaces:
   - *AI Sales Insights*: Sparkles-powered Gemini widget displaying a pipeline health score (0-100), automated observations, and prioritized recommendations.
 
 ### 3. 👥 Leads Management & Detail Drawer
+
 - **Full CRUD operations**: Tweak, search, filter, and track leads in a unified list interface.
 - **Advanced Filtering & Sorting**: Filter by stage, priority, or source. Sortable table columns, bulk deletions, and one-click CSV exports.
 - **Dual View Modes**: Seamless toggle between List (Table) and Grid (Card) layouts.
@@ -54,28 +59,33 @@ Designed as a modern 3-column dashboard matching premium SaaS interfaces:
   - *AI Email Generator*: Drafts targeted sales emails based on tone (professional, friendly, casual, formal) and purpose (follow-up, demo schedule, intro).
 
 ### 4. 🗂️ Sales Pipeline (Kanban Board)
+
 - Consolidated pipeline workflow utilizing 5 core stages: **New → Qualified → Proposal → Won → Lost**.
 - Smooth drag-and-drop mechanics to move deals across columns.
 - Real-time aggregation showing total deal count and value sum per stage.
 - Persistence of drag-and-drop order and stage updates in the MongoDB database.
 
 ### 5. 📝 Notes (Masonry Grid & Pinning)
+
 - Responsive masonry-style grid rendering notes with a "pinned" section at the top.
 - Real-time content query search.
 - Clean dialog options to create, edit, pin/unpin, delete, and link notes directly to specific Leads.
 
 ### 6. ✅ Follow-up Tasks (Date Range Grouping)
+
 - Focuses on checklists categorized by due date: **Overdue, Today, Upcoming, and Completed**.
 - Overdue and today tasks dynamically flagged to drive team urgency.
 - Top-level Task Completion Progress Bar indicating current work productivity.
 
 ### 7. 🎨 Navbar Glass Pill Navigation
+
 - Centered top navbar using white glass backdrop filters (`backdrop-blur-md`).
 - Integrated Lucide icons directly next to tab labels (`Dashboard`, `Leads`, `Pipeline`, `Contacts`, `Follow-ups`, `Notes`).
 - **Responsive Layout**: Text labels hide automatically on mobile devices, rendering a clean icon-only pill to prevent layout wrapping.
 - Removed the sidebar entirely to give pages maximum horizontal screen space.
 
 ### 8. 🧠 Robust Google Gemini Integration
+
 - Powered by the new Google GenAI `@google/genai` SDK (`gemini-2.5-flash` model).
 - Strict JSON Schema constraints for predictable summaries, emails, and dashboard observations.
 - **Defensive API Fallbacks**: If `GEMINI_API_KEY` is missing or the live API fails (e.g. rate-limits or expired keys), the service gracefully catches the error and serves realistic mock data, ensuring the app never throws a `500` crash.
@@ -92,6 +102,7 @@ Designed as a modern 3-column dashboard matching premium SaaS interfaces:
 ---
 
 ## 🗂️ Architecture Overview
+
 ```
 src/
 ├── app/
@@ -122,13 +133,15 @@ src/
 ## 🚀 Installation & Local Setup
 
 ### 1. Prerequisites
+
 - Node.js 18+
 - MongoDB (local instance or MongoDB Atlas cluster)
 
 ### 2. Setup Steps
+
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/crm-os.git
+git clone https://github.com/vedant2863/crm
 cd crm-os
 
 # Install dependencies
@@ -141,15 +154,19 @@ cp .env.example .env
 ```
 
 ### 3. Database Seeding (Required)
+
 Populates the database with **39 contacts, 37 deals, 36 tasks, and 30 notes** associated strictly with the primary developer account:
+
 ```bash
 npm run seed
 ```
 
 ### 4. Run Developer Server
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) and sign in using the demo credentials!
 
 ---
@@ -185,6 +202,7 @@ The app uses a custom `oklch` colour palette for both light and dark modes:
 ## 👤 Author
 
 **Vedant Jadhav**
+
 - GitHub: [@vedantjadhav](https://github.com/vedantjadhav)
 
 ---
