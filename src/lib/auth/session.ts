@@ -28,5 +28,7 @@ export function loginUser({
   return signIn("credentials", {
     email,
     password,
+    redirect: false,
+    callbackUrl: "/dashboard",
   });
 }
