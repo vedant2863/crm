@@ -7,6 +7,7 @@
 import dbConnect from "@/lib/dbConnect";
 import Notification from "@/models/notification";
 import Task from "@/models/task";
+import { notificationScanCache } from "@/lib/cache";
 
 export interface CreateNotificationPayload {
   title: string;
@@ -35,6 +36,10 @@ export async function createNotification(
 
 /** Scan for tasks due tomorrow and auto-generate notifications if missing */
 async function scanAndGenerateTaskNotifications(userId: string) {
+  // Cache scan results per user for 5 minutes to prevent re-scanning on every poll
+  const cacheKey = `scan:${userId}`;
+  if (notificationScanCache.get(cacheKey)) return;
+
   try {
     const startOfTomorrow = new Date();
     startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
@@ -49,43 +54,53 @@ async function scanAndGenerateTaskNotifications(userId: string) {
       userId,
       status: { $in: ["pending", "in_progress"] },
       dueDate: { $gte: startOfTomorrow, $lte: endOfTomorrow },
-    });
+    })
+      .select("_id title")
+      .maxTimeMS(5_000)
+      .lean();
 
     for (const task of tasksDueTomorrow) {
+      const typedTask = task as { _id: { toString(): string }; title: string };
       // Check if we already created a notification for this task
       const exists = await Notification.findOne({
         userId,
         type: "task",
-        referenceId: task._id,
-      });
+        referenceId: typedTask._id,
+      }).lean();
 
       if (!exists) {
         await Notification.create({
           userId,
           title: "Task due tomorrow",
-          message: `Task "${task.title}" is due tomorrow.`,
+          message: `Task "${typedTask.title}" is due tomorrow.`,
           type: "task",
-          referenceId: task._id,
+          referenceId: typedTask._id,
           referenceType: "task",
           read: false,
         });
       }
     }
+
+    // Mark as scanned for this user
+    notificationScanCache.set(cacheKey, true);
   } catch (error) {
     console.error("Error scanning due tomorrow tasks for notifications:", error);
   }
 }
 
 /** Get recent notifications for a user, scanning tasks first */
-export async function getNotifications(userId: string, limit = 50) {
+export async function getNotifications(userId: string, limit = 30) {
   await dbConnect();
+
+  const safeLimit = Math.min(Math.max(1, limit), 50);
 
   // Run the dynamic scan to ensure notifications are up to date
   await scanAndGenerateTaskNotifications(userId);
 
   return await Notification.find({ userId })
     .sort({ createdAt: -1 })
-    .limit(limit)
+    .limit(safeLimit)
+    .maxTimeMS(10_000)
     .lean();
 }
 

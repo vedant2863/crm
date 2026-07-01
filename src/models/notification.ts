@@ -33,6 +33,10 @@ const notificationSchema = new Schema<INotification>(
 
 // Optimize sorting and lookup index
 notificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
+// Dedup index for notification scan
+notificationSchema.index({ userId: 1, type: 1, referenceId: 1 });
+// TTL: auto-delete notifications older than 90 days
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7_776_000 });
 
 const Notification =
   mongoose.models.Notification ||

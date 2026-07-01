@@ -9,6 +9,7 @@ import Task from "@/models/task";
 import User from "@/models/user";
 import "@/models/contact";
 import "@/models/deal";
+import { getOrganizationUserIds } from "@/lib/org-cache";
 import {
   afterTaskCreated,
   afterTaskUpdated,
@@ -36,28 +37,14 @@ export interface TaskPayload {
   tags?: string[];
 }
 
-/** Get list of user IDs belonging to the same organization/company (respects privacy toggle) */
-async function getOrganizationUserIds(userId: string): Promise<string[]> {
-  const user = await User.findById(userId);
-  if (!user) return [userId];
-
-  // If Collaborative Team Sharing toggle is OFF, tasks are kept private
-  if (!user.notifications?.contactActivities) {
-    return [userId];
-  }
-
-  if (!user.company) return [userId];
-  const usersInCompany = await User.find({ company: user.company }).select("_id");
-  return usersInCompany.map((u) => u._id.toString());
-}
-
 /** List tasks for an organization/user with optional filters */
-export async function getTasks({ userId, search, status, priority, page = 1, limit = 100 }: TaskFilters) {
+export async function getTasks({ userId, search, status, priority, page = 1, limit = 50 }: TaskFilters) {
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
 
-  const skip = (page - 1) * limit;
-  const query: any = { userId: { $in: orgUserIds } };
+  const safeLimit = Math.min(Math.max(1, limit), 50);
+  const skip = (page - 1) * safeLimit;
+  const query: Record<string, unknown> = { userId: { $in: orgUserIds } };
 
   if (search) {
     query.$or = [
@@ -75,9 +62,10 @@ export async function getTasks({ userId, search, status, priority, page = 1, lim
       .populate("dealId", "title")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
+      .limit(safeLimit)
+      .maxTimeMS(10_000)
       .lean(),
-    Task.countDocuments(query),
+    Task.countDocuments(query).maxTimeMS(10_000),
   ]);
 
   const formatted = (tasks as unknown as { _id: { toString(): string } }[]).map((t) => ({
@@ -85,7 +73,7 @@ export async function getTasks({ userId, search, status, priority, page = 1, lim
     _id: t._id.toString(),
   }));
 
-  return { tasks: formatted, total, page, limit, pages: Math.ceil(total / limit) };
+  return { tasks: formatted, total, page, limit: safeLimit, pages: Math.ceil(total / safeLimit) };
 }
 
 /** Get a single task by ID (scoped to organization/user) */
@@ -94,7 +82,9 @@ export async function getTaskById(id: string, userId: string) {
   const orgUserIds = await getOrganizationUserIds(userId);
   const task = await Task.findOne({ _id: id, userId: { $in: orgUserIds } })
     .populate("contactId", "name company")
-    .populate("dealId", "title");
+    .populate("dealId", "title")
+    .maxTimeMS(10_000)
+    .lean();
   if (!task) throw new Error("NOT_FOUND");
   return task;
 }
@@ -102,7 +92,7 @@ export async function getTaskById(id: string, userId: string) {
 /** Create a new task */
 export async function createTask(userId: string, data: TaskPayload) {
   await dbConnect();
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("name email company role notifications").lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const task = new Task({
@@ -120,11 +110,12 @@ export async function createTask(userId: string, data: TaskPayload) {
   await task.save();
 
   // Delegate side-effect business logic hooks
-  await afterTaskCreated(userId, task);
+  await afterTaskCreated(user, userId, task);
 
   const populated = await Task.findById(task._id)
     .populate("contactId", "name company")
-    .populate("dealId", "title");
+    .populate("dealId", "title")
+    .lean();
 
   return populated;
 }
@@ -132,7 +123,7 @@ export async function createTask(userId: string, data: TaskPayload) {
 /** Update an existing task (scoped to organization/user) */
 export async function updateTask(id: string, userId: string, data: Partial<TaskPayload>) {
   await dbConnect();
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("name email company role notifications").lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
@@ -158,7 +149,7 @@ export async function updateTask(id: string, userId: string, data: Partial<TaskP
   if (!updated) throw new Error("NOT_FOUND");
 
   // Delegate side-effect business logic hooks
-  await afterTaskUpdated(userId, oldTask, updated);
+  await afterTaskUpdated(user, userId, oldTask, updated);
 
   return updated;
 }
@@ -166,7 +157,7 @@ export async function updateTask(id: string, userId: string, data: Partial<TaskP
 /** Delete a task (scoped to organization/user with RBAC) */
 export async function deleteTask(id: string, userId: string) {
   await dbConnect();
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("name email company role notifications").lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
@@ -175,7 +166,7 @@ export async function deleteTask(id: string, userId: string) {
 
   // RBAC gates: Admin or Creator
   const isCreator = task.userId.toString() === userId;
-  const isAdmin = user.role === "admin";
+  const isAdmin = (user as { role?: string }).role === "admin";
   if (!isCreator && !isAdmin) {
     throw new Error("UNAUTHORIZED");
   }
@@ -183,7 +174,7 @@ export async function deleteTask(id: string, userId: string) {
   await Task.findByIdAndDelete(id);
 
   // Delegate side-effect business logic hooks
-  await afterTaskDeleted(userId, task);
+  await afterTaskDeleted(user, userId, task);
 
   return { id };
 }

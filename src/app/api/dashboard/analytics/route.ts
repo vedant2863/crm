@@ -1,5 +1,16 @@
-import { handleGetAnalytics } from "@/features/dashboard/api/handler";
+import { NextResponse } from "next/server";
+import { getServerSession } from "@/lib/auth/auth";
+import { handleApiError, AppError } from "@/lib/errors";
+import { getAnalytics } from "@/features/dashboard/services/dashboard-service";
 
 export async function GET() {
-  return handleGetAnalytics();
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.id) throw AppError.unauthorized();
+
+    const data = await getAnalytics(session.user.id);
+    return NextResponse.json(data);
+  } catch (err) {
+    return handleApiError(err);
+  }
 }

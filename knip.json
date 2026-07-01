@@ -16,7 +16,9 @@
   ],
   "ignoreDependencies": [
     "date-fns",
-    "tw-animate-css"
+    "tw-animate-css",
+    "@radix-ui/react-separator",
+    "@radix-ui/react-tooltip"
   ],
   "ignoreExportsUsedInFile": true,
   "rules": {

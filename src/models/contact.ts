@@ -37,6 +37,7 @@ const contactSchema = new Schema(
 
 // Index for better query performance
 contactSchema.index({ userId: 1, email: 1 });
+contactSchema.index({ userId: 1, status: 1, createdAt: -1 });
 contactSchema.index({ name: "text", company: "text", email: "text" });
 
 const Contact = mongoose.models.Contact || mongoose.model<IContact>("Contact", contactSchema);

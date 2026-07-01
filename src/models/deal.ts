@@ -68,6 +68,8 @@ const dealSchema = new Schema<IDeal>(
 
 // Indexes for faster queries
 dealSchema.index({ userId: 1, stage: 1 });
+dealSchema.index({ userId: 1, createdAt: -1 });
+dealSchema.index({ userId: 1, stage: 1, updatedAt: -1 });
 dealSchema.index({ title: "text", description: "text" });
 
 const Deal = mongoose.models.Deal || mongoose.model<IDeal>("Deal", dealSchema);

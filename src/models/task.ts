@@ -47,6 +47,7 @@ const taskSchema = new Schema(
 
 // Index for better query performance
 taskSchema.index({ userId: 1, status: 1 });
+taskSchema.index({ userId: 1, status: 1, dueDate: 1 });
 taskSchema.index({ assignedTo: 1, dueDate: 1 });
 taskSchema.index({ title: "text", description: "text" });
 

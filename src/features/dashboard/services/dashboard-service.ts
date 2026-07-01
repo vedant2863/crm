@@ -3,6 +3,9 @@
  *
  * Scopes all dashboard analytics, KPIs, and charts to organization level (collaborative Multi-Tenant).
  * Integrates the new Activity collection to render a live collaborative Activity timeline.
+ *
+ * OPTIMIZATION: Uses centralized org-cache, .lean(), .maxTimeMS(), and in-memory
+ * dashboard caching (30s TTL) to reduce DB load at 1000 concurrent users.
  */
 import dbConnect from "@/lib/dbConnect";
 import Contact from "@/models/contact";
@@ -10,6 +13,8 @@ import Deal from "@/models/deal";
 import Task from "@/models/task";
 import User from "@/models/user";
 import Activity from "@/models/activity";
+import { getOrganizationUserIds } from "@/lib/org-cache";
+import { dashboardCache } from "@/lib/cache";
 
 const DEAL_STAGES = [
   { key: "new", label: "New" },
@@ -27,26 +32,22 @@ function formatTimeAgo(date: Date): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-/** Get list of user IDs in the same company/organization */
-async function getOrganizationUserIds(userId: string): Promise<string[]> {
-  const user = await User.findById(userId);
-  if (!user || !user.company) return [userId];
-  const usersInCompany = await User.find({ company: user.company }).select("_id");
-  return usersInCompany.map((u) => u._id.toString());
-}
-
 /** KPIs: totalContacts, totalDeals, totalRevenue, conversionRate scoped to Org */
 export async function getKpis(userId: string) {
+  const cacheKey = `kpis:${userId}`;
+  const cached = dashboardCache.get(cacheKey);
+  if (cached) return cached;
+
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
 
   const [totalContacts, totalDeals, dealStats] = await Promise.all([
-    Contact.countDocuments({ userId: { $in: orgUserIds } }),
-    Deal.countDocuments({ userId: { $in: orgUserIds } }),
+    Contact.countDocuments({ userId: { $in: orgUserIds } }).maxTimeMS(10_000),
+    Deal.countDocuments({ userId: { $in: orgUserIds } }).maxTimeMS(10_000),
     Deal.aggregate([
       { $match: { userId: { $in: orgUserIds } } },
       { $group: { _id: "$stage", count: { $sum: 1 }, totalValue: { $sum: "$value" } } },
-    ]),
+    ]).option({ maxTimeMS: 10_000 }),
   ]);
 
   const totalRevenue = dealStats
@@ -56,22 +57,35 @@ export async function getKpis(userId: string) {
   const wonDeals = dealStats.find((s) => s._id === "won")?.count || 0;
   const conversionRate = totalLeads > 0 ? (wonDeals / totalLeads) * 100 : 0;
 
-  return {
+  const result = {
     totalContacts,
     totalDeals,
     totalRevenue,
     conversionRate: Math.round(conversionRate * 100) / 100,
   };
+
+  dashboardCache.set(cacheKey, result);
+  return result;
 }
 
 /** Analytics: forecastData, stageData, taskData scoped to Org */
 export async function getAnalytics(userId: string) {
+  const cacheKey = `analytics:${userId}`;
+  const cached = dashboardCache.get(cacheKey);
+  if (cached) return cached;
+
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
 
   const [deals, tasks] = await Promise.all([
-    Deal.find({ userId: { $in: orgUserIds } }),
-    Task.find({ userId: { $in: orgUserIds } }),
+    Deal.find({ userId: { $in: orgUserIds } })
+      .select("stage value probability expectedCloseDate")
+      .maxTimeMS(10_000)
+      .lean(),
+    Task.find({ userId: { $in: orgUserIds } })
+      .select("priority status")
+      .maxTimeMS(10_000)
+      .lean(),
   ]);
 
   // Revenue forecast (6 months)
@@ -87,7 +101,8 @@ export async function getAnalytics(userId: string) {
     });
   }
 
-  deals.forEach((deal) => {
+  interface DealLean { stage: string; value: number; probability?: number; expectedCloseDate?: Date }
+  (deals as DealLean[]).forEach((deal) => {
     if (deal.stage === "lost" || !deal.expectedCloseDate) return;
     const d = new Date(deal.expectedCloseDate);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -104,7 +119,7 @@ export async function getAnalytics(userId: string) {
   // Stage distribution
   const stageKeys = ["new", "qualified", "proposal", "won", "lost"];
   const stageMap = new Map(stageKeys.map((s) => [s, { value: 0, count: 0 }]));
-  deals.forEach((d) => {
+  (deals as DealLean[]).forEach((d) => {
     const cur = stageMap.get(d.stage) || { value: 0, count: 0 };
     stageMap.set(d.stage, { value: cur.value + d.value, count: cur.count + 1 });
   });
@@ -116,7 +131,8 @@ export async function getAnalytics(userId: string) {
   // Task distribution
   const priorityCounts: Record<string, number> = { low: 0, medium: 0, high: 0 };
   const statusCounts: Record<string, number> = { pending: 0, in_progress: 0, completed: 0, cancelled: 0 };
-  tasks.forEach((t) => {
+  interface TaskLean { priority: string; status: string }
+  (tasks as TaskLean[]).forEach((t) => {
     if (t.priority in priorityCounts) priorityCounts[t.priority]++;
     if (t.status in statusCounts) statusCounts[t.status]++;
   });
@@ -130,37 +146,50 @@ export async function getAnalytics(userId: string) {
     value: v,
   }));
 
-  return { forecastData, stageData, taskData: { priorityData, statusData } };
+  const result = { forecastData, stageData, taskData: { priorityData, statusData } };
+  dashboardCache.set(cacheKey, result);
+  return result;
 }
 
 /** Pipeline funnel stats by stage scoped to Org */
 export async function getPipelineStats(userId: string) {
+  const cacheKey = `pipeline:${userId}`;
+  const cached = dashboardCache.get(cacheKey);
+  if (cached) return cached;
+
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
 
   const dealStats = await Deal.aggregate([
     { $match: { userId: { $in: orgUserIds } } },
     { $group: { _id: "$stage", count: { $sum: 1 }, totalValue: { $sum: "$value" } } },
-  ]);
+  ]).option({ maxTimeMS: 10_000 });
 
   const pipelineStats = DEAL_STAGES.map((stage) => {
     const stat = dealStats.find((s) => s._id === stage.key);
     return { stage: stage.label, count: stat?.count || 0, value: stat?.totalValue || 0 };
   });
 
-  return { pipelineStats };
+  const result = { pipelineStats };
+  dashboardCache.set(cacheKey, result);
+  return result;
 }
 
 /** Collaborative Recent Activity Timeline */
 export async function getRecentActivities(userId: string) {
+  const cacheKey = `activities:${userId}`;
+  const cached = dashboardCache.get(cacheKey);
+  if (cached) return cached;
+
   await dbConnect();
-  const user = await User.findById(userId);
-  const company = user?.company || "SoloTenant";
+  const user = await User.findById(userId).select("company").lean();
+  const company = (user as { company?: string } | null)?.company || "SoloTenant";
 
   // Query actual collaborative activity documents from the user's organization
   const activities = await Activity.find({ organization: company })
     .sort({ createdAt: -1 })
     .limit(7)
+    .maxTimeMS(10_000)
     .lean();
 
   const formatted = (activities as unknown as {
@@ -176,23 +205,31 @@ export async function getRecentActivities(userId: string) {
     timestamp: formatTimeAgo(a.createdAt),
   }));
 
-  return { recentActivities: formatted };
+  const result = { recentActivities: formatted };
+  dashboardCache.set(cacheKey, result);
+  return result;
 }
 
 /** Task status stats (for HeroHeader pending count) scoped to Org */
 export async function getTaskStats(userId: string) {
+  const cacheKey = `taskStats:${userId}`;
+  const cached = dashboardCache.get(cacheKey);
+  if (cached) return cached;
+
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
 
   const stats = await Task.aggregate([
     { $match: { userId: { $in: orgUserIds } } },
     { $group: { _id: "$status", count: { $sum: 1 } } },
-  ]);
+  ]).option({ maxTimeMS: 10_000 });
 
   const taskStats = stats.reduce(
     (acc, s) => ({ ...acc, [s._id]: s.count }),
     {} as Record<string, number>
   );
 
-  return { taskStats };
+  const result = { taskStats };
+  dashboardCache.set(cacheKey, result);
+  return result;
 }

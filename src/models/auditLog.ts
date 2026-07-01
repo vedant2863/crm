@@ -25,6 +25,8 @@ const auditLogSchema = new Schema<IAuditLog>(
 
 // Indexes for fast security log lookups
 auditLogSchema.index({ createdAt: -1 });
+auditLogSchema.index({ userId: 1, createdAt: -1 });
+auditLogSchema.index({ action: 1, createdAt: -1 });
 
 const AuditLog =
   mongoose.models.AuditLog ||

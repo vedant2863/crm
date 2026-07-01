@@ -3,6 +3,7 @@ import User from "@/models/user";
 import Link from "next/link";
 import { Sparkles, ArrowRight, ShieldCheck, Building2, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import envConfig from "@/lib/config/envconfig";
 
 type Props = {
   params: Promise<{ tenant: string }>;
@@ -10,6 +11,7 @@ type Props = {
 
 export default async function TenantPage({ params }: Props) {
   const { tenant } = await params;
+  const mainSiteUrl = envConfig.auth.url;
 
   await dbConnect();
 
@@ -21,7 +23,9 @@ export default async function TenantPage({ params }: Props) {
       { name: { $regex: new RegExp("^" + escapedTenant, "i") } },
       { company: { $regex: new RegExp("^" + escapedTenant + "$", "i") } },
     ],
-  }).select("name company avatar bio");
+  })
+    .select("name company avatar bio")
+    .lean(); // lean is use to get the plain javascript object instead of mongoose document object.
 
   if (!tenantUser) {
     return (
@@ -32,7 +36,7 @@ export default async function TenantPage({ params }: Props) {
             The workspace subdomain <span className="font-bold text-foreground">&quot;{tenant}&quot;</span> is not registered in our CRM database.
           </p>
           <Button asChild variant="outline" className="w-full font-bold">
-            <Link href="http://localhost:3000">Go to CRM OS Main Site</Link>
+            <Link href={mainSiteUrl}>Go to CRM OS Main Site</Link>
           </Button>
         </div>
       </div>
@@ -84,14 +88,14 @@ export default async function TenantPage({ params }: Props) {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full font-bold">
-              <Link href="http://localhost:3000">
+              <Link href={mainSiteUrl}>
                 Main Site Homepage
               </Link>
             </Button>
           </div>
         </div>
       </main>
-      
+
       <div className="mt-8 text-center text-xs text-muted-foreground flex items-center gap-1.5">
         <ShieldCheck className="h-4 w-4 text-emerald-500" />
         <span>Secure NextAuth Session Gateway</span>

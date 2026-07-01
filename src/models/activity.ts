@@ -27,6 +27,10 @@ const activitySchema = new Schema<IActivity>(
 
 // Indexes for fast lookup by organization timeline
 activitySchema.index({ organization: 1, createdAt: -1 });
+// User-scoped activity queries
+activitySchema.index({ userId: 1, createdAt: -1 });
+// TTL: auto-delete activities older than 180 days
+activitySchema.index({ createdAt: 1 }, { expireAfterSeconds: 15_552_000 });
 
 const Activity =
   mongoose.models.Activity ||

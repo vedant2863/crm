@@ -2,7 +2,6 @@
 
 import { Toaster } from "react-hot-toast";
 
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { SessionProvider } from "@/contexts/session-context";
 import { ThemeProvider, useTheme } from "@/contexts/theme-context";
 
@@ -12,7 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <ThemeProvider>
-        <SidebarProvider>{children}</SidebarProvider>
+        {children}
 
         <Toaster position="top-right" />
       </ThemeProvider>

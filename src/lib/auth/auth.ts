@@ -4,6 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/user";
 import { NextAuthOptions, getServerSession as nextAuthGetServerSession } from "next-auth";
 import envConfig from "@/lib/config/envconfig";
+import { loginAttemptTracker } from "@/lib/rate-limiter";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,8 +18,19 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing email or password");
         }
+
+        const email = credentials.email.toLowerCase().trim();
+
+        // Account lockout: 5 failed attempts = 15 min lockout
+        const lockoutCheck = loginAttemptTracker.check(`login:${email}`);
+        if (!lockoutCheck.allowed) {
+          throw new Error(
+            `Account temporarily locked. Try again in ${lockoutCheck.retryAfterSeconds} seconds.`
+          );
+        }
+
         await dbConnect();
-        const user = await User.findOne({ email: credentials.email.toLowerCase() });
+        const user = await User.findOne({ email });
         if (!user) {
           throw new Error("No user found with this email");
         }
@@ -60,7 +72,21 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 8 * 60 * 60, // 8 hours
   },
+  cookies: envConfig.app.isProd
+    ? {
+        sessionToken: {
+          name: "__Secure-next-auth.session-token",
+          options: {
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+            secure: true,
+          },
+        },
+      }
+    : undefined,
   secret: envConfig.auth.secret,
 };
 

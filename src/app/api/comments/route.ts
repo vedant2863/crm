@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth/auth";
+import { handleApiError, AppError } from "@/lib/errors";
+import { sanitizeString, validateObjectId } from "@/lib/validation";
 import {
   createComment,
   getComments,
@@ -10,52 +12,43 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const entityId = searchParams.get("entityId");
     if (!entityId) {
-      return NextResponse.json(
-        { error: "entityId query parameter is required" },
-        { status: 400 }
-      );
+      throw AppError.validationFailed("entityId query parameter is required");
     }
+    validateObjectId(entityId, "entityId");
+
     const comments = await getComments(entityId);
     return NextResponse.json({ comments });
   } catch (err) {
-    console.error("Error fetching comments:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(err);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session?.user?.id) throw AppError.unauthorized();
 
     const body = await req.json();
     const { entityId, entityType, content } = body;
     if (!entityId || !entityType || !content) {
-      return NextResponse.json(
-        { error: "entityId, entityType, and content are required" },
-        { status: 400 }
-      );
+      throw AppError.validationFailed("entityId, entityType, and content are required");
+    }
+    validateObjectId(entityId, "entityId");
+    const sanitizedContent = sanitizeString(content, 2000);
+    if (!sanitizedContent) {
+      throw AppError.validationFailed("Comment content cannot be empty");
     }
 
     const comment = await createComment(
       session.user.id,
       session.user.name || "User",
-      content,
+      sanitizedContent,
       entityType,
       entityId
     );
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (err) {
-    console.error("Error creating comment:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(err);
   }
 }

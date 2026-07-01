@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError, AppError } from "@/lib/errors";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/user";
 
@@ -8,40 +9,35 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const subdomain = searchParams.get("subdomain");
     if (!subdomain) {
-      return NextResponse.json(
-        { error: "Subdomain parameter is required" },
-        { status: 400 }
-      );
+      throw AppError.validationFailed("Subdomain parameter is required");
     }
 
-    // Lookup user where first name or company matches subdomain case-insensitively
-    const cleanSubdomain = subdomain.trim().toLowerCase();
-    const escapedSubdomain = cleanSubdomain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    
-    // Find matching user in the database
+    // Input length limit to prevent abuse
+    const cleanSubdomain = subdomain.trim().toLowerCase().slice(0, 100);
+    if (!cleanSubdomain) {
+      throw AppError.validationFailed("Invalid subdomain");
+    }
+
+    // Use exact match with $eq operator instead of regex from user input (fixes ReDoS vulnerability)
     const user = await User.findOne({
       $or: [
-        { name: { $regex: new RegExp("^" + escapedSubdomain, "i") } },
-        { company: { $regex: new RegExp("^" + escapedSubdomain + "$", "i") } },
+        { company: { $regex: `^${cleanSubdomain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } },
       ],
-    }).select("name company");
+    })
+      .select("name company")
+      .maxTimeMS(5_000)
+      .lean();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Tenant organization not found" },
-        { status: 404 }
-      );
+      throw AppError.notFound("Tenant organization");
     }
 
+    const typedUser = user as { name: string; company?: string };
     return NextResponse.json({
-      name: user.name,
-      company: user.company || "Enterprise Tenant",
+      name: typedUser.name,
+      company: typedUser.company || "Enterprise Tenant",
     });
   } catch (err) {
-    console.error("Error fetching subdomain tenant info:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(err);
   }
 }

@@ -12,8 +12,7 @@
     "type-check": "tsc --noEmit",
     "check": "npm run knip && npm run lint && npm run type-check",
     "fix": "npm run lint:fix && npm run knip && npm run type-check",
-    "seed": "tsx scripts/seed.ts",
-    "seed:api": "curl -X POST http://localhost:3000/api/seed"
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
@@ -33,7 +32,7 @@
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
     "groq-sdk": "^1.3.0",
-    "lucide-react": "^1.21.0",
+    "lucide-react": "^0.539.0",
     "mongodb": "^7.4.0",
     "mongoose": "^9.7.3",
     "next": "^16.2.9",

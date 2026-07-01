@@ -4,6 +4,10 @@
  * Isolated Business Logic / Domain Hook layer.
  * Contains business rules, notification triggers, activity logging, and audit logs.
  * Separated completely from database query operations.
+ *
+ * OPTIMIZATION: All hooks now accept a pre-fetched user object instead of
+ * re-fetching from DB, eliminating ~9000 redundant queries at 1000 concurrent users.
+ * Non-critical side effects (logging) run in parallel via Promise.all.
  */
 import {
   logActivity,
@@ -11,7 +15,20 @@ import {
   sendEmailNotification,
 } from "./enterprise-service";
 import { createNotification } from "@/features/notifications/services/notification-service";
-import User from "@/models/user";
+
+/** Lean user shape passed from services (avoids full Mongoose document overhead) */
+interface UserContext {
+  _id?: { toString(): string };
+  name: string;
+  email: string;
+  company?: string;
+  role?: string;
+  notifications?: {
+    emailNotifications?: boolean;
+    contactActivities?: boolean;
+    [key: string]: boolean | undefined;
+  };
+}
 
 // Event document interfaces to avoid 'any' types in hooks
 export interface ContactEventDoc {
@@ -41,29 +58,17 @@ export interface TaskEventDoc {
    CONTACT BUSINESS HOOKS
    ================================================================= */
 
-export async function afterContactCreated(userId: string, contact: ContactEventDoc) {
-  const user = await User.findById(userId);
-  if (!user) return;
+export async function afterContactCreated(user: UserContext, userId: string, contact: ContactEventDoc) {
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `created contact ${contact.name}`,
-    "contact",
-    contact._id.toString()
-  );
+  // Fire logging side effects in parallel
+  await Promise.all([
+    logActivity(company, userId, userName, `created contact ${contact.name}`, "contact", contact._id.toString()),
+    logAudit(userId, userName, "CREATE_CONTACT", `Created contact ${contact.name} (${contact.email})`),
+  ]);
 
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "CREATE_CONTACT",
-    `Created contact ${contact.name} (${contact.email})`
-  );
-
-  // 3. Trigger Lead Notifications
+  // Trigger Lead Notifications
   if (contact.status === "prospect" || contact.status === "lead") {
     await createNotification(userId, {
       title: "New lead assigned",
@@ -73,43 +78,32 @@ export async function afterContactCreated(userId: string, contact: ContactEventD
       referenceType: "contact",
     });
 
-    // Send Mock SMTP Email Notification (respects user's settings)
+    // Send email notification (respects user's settings)
     await sendEmailNotification(
       userId,
       user.email,
       `🚨 New Lead Assigned: ${contact.name}`,
-      `Hi ${user.name},\n\nA new lead has been assigned to your organization:\nName: ${contact.name}\nCompany: ${contact.company || "N/A"}\nEmail: ${contact.email}\n\nCheck your dashboard for details.`
+      `Hi ${userName},\n\nA new lead has been assigned to your organization:\nName: ${contact.name}\nCompany: ${contact.company || "N/A"}\nEmail: ${contact.email}\n\nCheck your dashboard for details.`
     );
   }
 }
 
 export async function afterContactUpdated(
+  user: UserContext,
   userId: string,
   oldContact: ContactEventDoc,
   newContact: ContactEventDoc
 ) {
-  const user = await User.findById(userId);
-  if (!user) return;
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `updated contact ${newContact.name}`,
-    "contact",
-    newContact._id.toString()
-  );
+  // Fire logging side effects in parallel
+  await Promise.all([
+    logActivity(company, userId, userName, `updated contact ${newContact.name}`, "contact", newContact._id.toString()),
+    logAudit(userId, userName, "UPDATE_CONTACT", `Updated contact ${newContact.name} (${newContact.email})`),
+  ]);
 
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "UPDATE_CONTACT",
-    `Updated contact ${newContact.name} (${newContact.email})`
-  );
-
-  // 3. Trigger Lead Notifications if status changed to Prospect/Lead
+  // Trigger Lead Notifications if status changed to Prospect/Lead
   const wasLead = oldContact.status === "prospect" || oldContact.status === "lead";
   const isNowLead = newContact.status === "prospect" || newContact.status === "lead";
 
@@ -126,61 +120,35 @@ export async function afterContactUpdated(
       userId,
       user.email,
       `🚨 New Lead Assigned: ${newContact.name}`,
-      `Hi ${user.name},\n\nA contact has been updated to Lead status in your organization:\nName: ${newContact.name}\nCompany: ${newContact.company || "N/A"}\n\nCheck your dashboard for details.`
+      `Hi ${userName},\n\nA contact has been updated to Lead status in your organization:\nName: ${newContact.name}\nCompany: ${newContact.company || "N/A"}\n\nCheck your dashboard for details.`
     );
   }
 }
 
-export async function afterContactDeleted(userId: string, contact: ContactEventDoc) {
-  const user = await User.findById(userId);
-  if (!user) return;
+export async function afterContactDeleted(user: UserContext, userId: string, contact: ContactEventDoc) {
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `deleted contact ${contact.name}`,
-    "contact",
-    contact._id.toString()
-  );
-
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "DELETE_CONTACT",
-    `Deleted contact ${contact.name} (${contact.email})`
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `deleted contact ${contact.name}`, "contact", contact._id.toString()),
+    logAudit(userId, userName, "DELETE_CONTACT", `Deleted contact ${contact.name} (${contact.email})`),
+  ]);
 }
 
 /* =================================================================
    DEAL BUSINESS HOOKS
    ================================================================= */
 
-export async function afterDealCreated(userId: string, deal: DealEventDoc) {
-  const user = await User.findById(userId);
-  if (!user) return;
+export async function afterDealCreated(user: UserContext, userId: string, deal: DealEventDoc) {
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `created deal ${deal.title}`,
-    "deal",
-    deal._id.toString()
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `created deal ${deal.title}`, "deal", deal._id.toString()),
+    logAudit(userId, userName, "CREATE_DEAL", `Created deal ${deal.title} valued at $${deal.value}`),
+  ]);
 
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "CREATE_DEAL",
-    `Created deal ${deal.title} valued at $${deal.value}`
-  );
-
-  // 3. Trigger Notification on Win
+  // Trigger Notification on Win
   if (deal.stage === "won") {
     await createNotification(userId, {
       title: "Deal moved to Won",
@@ -194,38 +162,26 @@ export async function afterDealCreated(userId: string, deal: DealEventDoc) {
       userId,
       user.email,
       `🏆 Deal Won! ${deal.title}`,
-      `Hi ${user.name},\n\nCongratulations! A new deal has been marked as WON:\nTitle: ${deal.title}\nValue: $${deal.value.toLocaleString()}\n\nKeep up the great work!`
+      `Hi ${userName},\n\nCongratulations! A new deal has been marked as WON:\nTitle: ${deal.title}\nValue: $${deal.value.toLocaleString()}\n\nKeep up the great work!`
     );
   }
 }
 
 export async function afterDealUpdated(
+  user: UserContext,
   userId: string,
   oldDeal: DealEventDoc,
   newDeal: DealEventDoc
 ) {
-  const user = await User.findById(userId);
-  if (!user) return;
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `updated deal ${newDeal.title} (Stage: ${newDeal.stage})`,
-    "deal",
-    newDeal._id.toString()
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `updated deal ${newDeal.title} (Stage: ${newDeal.stage})`, "deal", newDeal._id.toString()),
+    logAudit(userId, userName, "UPDATE_DEAL", `Updated deal ${newDeal.title} (value: $${newDeal.value}, stage: ${newDeal.stage})`),
+  ]);
 
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "UPDATE_DEAL",
-    `Updated deal ${newDeal.title} (value: $${newDeal.value}, stage: ${newDeal.stage})`
-  );
-
-  // 3. Trigger Deal Won transition alert
+  // Trigger Deal Won transition alert
   const wasWon = oldDeal.stage === "won";
   const isNowWon = newDeal.stage === "won";
 
@@ -242,107 +198,56 @@ export async function afterDealUpdated(
       userId,
       user.email,
       `🏆 Deal Won! ${newDeal.title}`,
-      `Hi ${user.name},\n\nCongratulations! Deal "${newDeal.title}" valued at $${newDeal.value.toLocaleString()} has transitioned to WON!\n\nCheck your pipeline details for more info.`
+      `Hi ${userName},\n\nCongratulations! Deal "${newDeal.title}" valued at $${newDeal.value.toLocaleString()} has transitioned to WON!\n\nCheck your pipeline details for more info.`
     );
   }
 }
 
-export async function afterDealDeleted(userId: string, deal: DealEventDoc) {
-  const user = await User.findById(userId);
-  if (!user) return;
+export async function afterDealDeleted(user: UserContext, userId: string, deal: DealEventDoc) {
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `deleted deal ${deal.title}`,
-    "deal",
-    deal._id.toString()
-  );
-
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "DELETE_DEAL",
-    `Deleted deal ${deal.title} valued at $${deal.value}`
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `deleted deal ${deal.title}`, "deal", deal._id.toString()),
+    logAudit(userId, userName, "DELETE_DEAL", `Deleted deal ${deal.title} valued at $${deal.value}`),
+  ]);
 }
 
 /* =================================================================
    TASK BUSINESS HOOKS
    ================================================================= */
 
-export async function afterTaskCreated(userId: string, task: TaskEventDoc) {
-  const user = await User.findById(userId);
-  if (!user) return;
+export async function afterTaskCreated(user: UserContext, userId: string, task: TaskEventDoc) {
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `created task ${task.title}`,
-    "task",
-    task._id.toString()
-  );
-
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "CREATE_TASK",
-    `Created task ${task.title} (due: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "none"})`
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `created task ${task.title}`, "task", task._id.toString()),
+    logAudit(userId, userName, "CREATE_TASK", `Created task ${task.title} (due: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "none"})`),
+  ]);
 }
 
 export async function afterTaskUpdated(
+  user: UserContext,
   userId: string,
   _oldTask: TaskEventDoc,
   newTask: TaskEventDoc
 ) {
-  const user = await User.findById(userId);
-  if (!user) return;
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `updated task ${newTask.title} (Status: ${newTask.status})`,
-    "task",
-    newTask._id.toString()
-  );
-
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "UPDATE_TASK",
-    `Updated task ${newTask.title} (status: ${newTask.status}, priority: ${newTask.priority})`
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `updated task ${newTask.title} (Status: ${newTask.status})`, "task", newTask._id.toString()),
+    logAudit(userId, userName, "UPDATE_TASK", `Updated task ${newTask.title} (status: ${newTask.status}, priority: ${newTask.priority})`),
+  ]);
 }
 
-export async function afterTaskDeleted(userId: string, task: TaskEventDoc) {
-  const user = await User.findById(userId);
-  if (!user) return;
+export async function afterTaskDeleted(user: UserContext, userId: string, task: TaskEventDoc) {
+  const userName = user.name;
+  const company = user.company || "SoloTenant";
 
-  // 1. Log Activity
-  await logActivity(
-    user.company || "SoloTenant",
-    userId,
-    user.name,
-    `deleted task ${task.title}`,
-    "task",
-    task._id.toString()
-  );
-
-  // 2. Log Audit Log
-  await logAudit(
-    userId,
-    user.name,
-    "DELETE_TASK",
-    `Deleted task ${task.title}`
-  );
+  await Promise.all([
+    logActivity(company, userId, userName, `deleted task ${task.title}`, "task", task._id.toString()),
+    logAudit(userId, userName, "DELETE_TASK", `Deleted task ${task.title}`),
+  ]);
 }

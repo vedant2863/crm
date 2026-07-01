@@ -1,5 +1,16 @@
-import { handleGetTaskStats } from "@/features/dashboard/api/handler";
+import { NextResponse } from "next/server";
+import { getServerSession } from "@/lib/auth/auth";
+import { handleApiError, AppError } from "@/lib/errors";
+import { getTaskStats } from "@/features/dashboard/services/dashboard-service";
 
 export async function GET() {
-  return handleGetTaskStats();
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.id) throw AppError.unauthorized();
+
+    const data = await getTaskStats(session.user.id);
+    return NextResponse.json(data);
+  } catch (err) {
+    return handleApiError(err);
+  }
 }

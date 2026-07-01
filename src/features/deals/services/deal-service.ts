@@ -7,6 +7,7 @@
 import dbConnect from "@/lib/dbConnect";
 import Deal from "@/models/deal";
 import User from "@/models/user";
+import { getOrganizationUserIds } from "@/lib/org-cache";
 import {
   afterDealCreated,
   afterDealUpdated,
@@ -36,28 +37,14 @@ export interface DealPayload {
   priority?: string;
 }
 
-/** Get list of user IDs belonging to the same organization/company (respects privacy toggle) */
-async function getOrganizationUserIds(userId: string): Promise<string[]> {
-  const user = await User.findById(userId);
-  if (!user) return [userId];
-
-  // If Collaborative Team Sharing toggle is OFF, deals are kept private
-  if (!user.notifications?.contactActivities) {
-    return [userId];
-  }
-
-  if (!user.company) return [userId];
-  const usersInCompany = await User.find({ company: user.company }).select("_id");
-  return usersInCompany.map((u) => u._id.toString());
-}
-
 /** List deals for an organization/user with optional search/stage filter + pagination */
-export async function getDeals({ userId, search, stage, page = 1, limit = 100 }: DealFilters) {
+export async function getDeals({ userId, search, stage, page = 1, limit = 50 }: DealFilters) {
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
 
-  const skip = (page - 1) * limit;
-  const query: any = { userId: { $in: orgUserIds } };
+  const safeLimit = Math.min(Math.max(1, limit), 50);
+  const skip = (page - 1) * safeLimit;
+  const query: Record<string, unknown> = { userId: { $in: orgUserIds } };
 
   if (search) {
     query.$or = [
@@ -73,8 +60,14 @@ export async function getDeals({ userId, search, stage, page = 1, limit = 100 }:
   }
 
   const [deals, total] = await Promise.all([
-    Deal.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-    Deal.countDocuments(query),
+    Deal.find(query)
+      .select("title description value stage probability expectedCloseDate contactName company assignedTo contactId userId priority tags notes lastActivity createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(safeLimit)
+      .maxTimeMS(10_000)
+      .lean(),
+    Deal.countDocuments(query).maxTimeMS(10_000),
   ]);
 
   const formatted = (deals as unknown as { _id: { toString(): string } }[]).map((d) => ({
@@ -82,14 +75,16 @@ export async function getDeals({ userId, search, stage, page = 1, limit = 100 }:
     _id: d._id.toString(),
   }));
 
-  return { deals: formatted, total, page, limit, pages: Math.ceil(total / limit) };
+  return { deals: formatted, total, page, limit: safeLimit, pages: Math.ceil(total / safeLimit) };
 }
 
 /** Get a single deal by ID (scoped to organization/user) */
 export async function getDealById(id: string, userId: string) {
   await dbConnect();
   const orgUserIds = await getOrganizationUserIds(userId);
-  const deal = await Deal.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const deal = await Deal.findOne({ _id: id, userId: { $in: orgUserIds } })
+    .maxTimeMS(10_000)
+    .lean();
   if (!deal) throw new Error("NOT_FOUND");
   return deal;
 }
@@ -97,7 +92,7 @@ export async function getDealById(id: string, userId: string) {
 /** Create a new deal */
 export async function createDeal(userId: string, data: DealPayload) {
   await dbConnect();
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("name email company role notifications").lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const deal = new Deal({
@@ -113,7 +108,7 @@ export async function createDeal(userId: string, data: DealPayload) {
   await deal.save();
 
   // Delegate side-effect business logic hooks
-  await afterDealCreated(userId, deal);
+  await afterDealCreated(user, userId, deal);
 
   return deal;
 }
@@ -121,7 +116,7 @@ export async function createDeal(userId: string, data: DealPayload) {
 /** Update an existing deal (scoped to organization/user) */
 export async function updateDeal(id: string, userId: string, data: Partial<DealPayload>) {
   await dbConnect();
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("name email company role notifications").lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
@@ -143,7 +138,7 @@ export async function updateDeal(id: string, userId: string, data: Partial<DealP
   if (!updated) throw new Error("NOT_FOUND");
 
   // Delegate side-effect business logic hooks
-  await afterDealUpdated(userId, oldDeal, updated);
+  await afterDealUpdated(user, userId, oldDeal, updated);
 
   return updated;
 }
@@ -151,7 +146,7 @@ export async function updateDeal(id: string, userId: string, data: Partial<DealP
 /** Delete a deal (scoped to organization/user with RBAC) */
 export async function deleteDeal(id: string, userId: string) {
   await dbConnect();
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("name email company role notifications").lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
@@ -160,7 +155,7 @@ export async function deleteDeal(id: string, userId: string) {
 
   // RBAC gates: Admin or Creator
   const isCreator = deal.userId.toString() === userId;
-  const isAdmin = user.role === "admin";
+  const isAdmin = (user as { role?: string }).role === "admin";
   if (!isCreator && !isAdmin) {
     throw new Error("UNAUTHORIZED");
   }
@@ -168,7 +163,7 @@ export async function deleteDeal(id: string, userId: string) {
   await Deal.findByIdAndDelete(id);
 
   // Delegate side-effect business logic hooks
-  await afterDealDeleted(userId, deal);
+  await afterDealDeleted(user, userId, deal);
 
   return { id };
 }
