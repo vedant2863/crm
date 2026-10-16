@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "./Logo";
 import SearchBox from "./SearchBox";
-import NotificationDropdown from "@/features/notifications/components/NotificationDropdown";
+import { NotificationDropdown } from "@/features/notifications";
 import { useTheme } from "@/components/providers";
 import {
   DropdownMenu,

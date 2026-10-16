@@ -32,14 +32,18 @@ export async function searchAll({ userId, query, limit = 20 }: SearchOptions) {
       $or: [{ name: re }, { email: re }, { company: re }, { phone: re }],
     })
       .select("name email company phone status")
-      .limit(perEntity),
+      .limit(perEntity)
+      .maxTimeMS(10_000)
+      .lean(),
 
     Deal.find({
       userId,
       $or: [{ title: re }, { description: re }, { contactName: re }, { company: re }],
     })
       .select("title value stage contactName company probability")
-      .limit(perEntity),
+      .limit(perEntity)
+      .maxTimeMS(10_000)
+      .lean(),
 
     Task.find({
       userId,
@@ -48,25 +52,27 @@ export async function searchAll({ userId, query, limit = 20 }: SearchOptions) {
       .select("title status priority dueDate")
       .populate("contactId", "name")
       .populate("dealId", "title")
-      .limit(perEntity),
+      .limit(perEntity)
+      .maxTimeMS(10_000)
+      .lean(),
   ]);
 
   const results = {
-    contacts: contacts.map((c) => ({
-      id: c._id,
+    contacts: (contacts as any[]).map((c) => ({
+      id: c._id.toString(),
       type: "contact",
       title: c.name,
       subtitle: c.company || c.email,
       status: c.status,
       url: `/contacts`,
     })),
-    deals: deals.map((d) => ({
-      id: d._id,
+    deals: (deals as any[]).map((d) => ({
+      id: d._id.toString(),
       type: "deal",
       title: d.title,
       subtitle: `$${d.value.toLocaleString()} · ${d.stage}`,
       status: d.stage,
-      url: `/deals`,
+      url: `/pipeline`,
     })),
     tasks: tasks.map((t) => ({
       id: t._id,

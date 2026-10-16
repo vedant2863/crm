@@ -21,6 +21,8 @@ interface SecurityTabProps {
     loading: boolean;
     onSave: () => void;
     onPasswordChange: (e: React.FormEvent) => void;
+    currentPassword: string;
+    setCurrentPassword: (val: string) => void;
     newPassword: string;
     setNewPassword: (val: string) => void;
     confirmPassword: string;
@@ -33,6 +35,8 @@ export function SecurityTab({
     loading,
     onSave,
     onPasswordChange,
+    currentPassword,
+    setCurrentPassword,
     newPassword,
     setNewPassword,
     confirmPassword,
@@ -51,6 +55,19 @@ export function SecurityTab({
                 </CardHeader>
                 <CardContent className="p-6">
                     <form onSubmit={onPasswordChange} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="currentPassword">Current Password</Label>
+                            <Input
+                                id="currentPassword"
+                                type={showPassword ? "text" : "password"}
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder="Enter your current password"
+                                className="bg-background border-none ring-1 ring-border max-w-md"
+                                required
+                            />
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="newPassword">New Password</Label>
@@ -60,7 +77,9 @@ export function SecurityTab({
                                         type={showPassword ? "text" : "password"}
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Minimum 8 characters"
                                         className="bg-background border-none ring-1 ring-border pr-10"
+                                        required
                                     />
                                     <button
                                         type="button"
@@ -78,12 +97,14 @@ export function SecurityTab({
                                     type={showPassword ? "text" : "password"}
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Re-enter new password"
                                     className="bg-background border-none ring-1 ring-border"
+                                    required
                                 />
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <Button type="submit" disabled={loading || !newPassword} className="shadow-md">
+                            <Button type="submit" disabled={loading || !currentPassword || !newPassword} className="shadow-md">
                                 Update Password
                             </Button>
                         </div>

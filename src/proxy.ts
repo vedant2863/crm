@@ -9,11 +9,14 @@ import { authRateLimiter, apiRateLimiter } from "@/lib/rate-limiter";
 const PUBLIC_PATHS = ["/", "/login", "/register"];
 
 /**
- * Path prefixes that bypass middleware entirely.
+ * Path prefixes that bypass middleware/proxy entirely.
  */
 const ALWAYS_ALLOWED_PREFIXES = [
+  "/healthz",    // Production health check probe endpoint
+  "/api/healthz",// Alternative API health check probe endpoint
   "/api/auth",   // NextAuth API route handler endpoints
   "/api/seed",   // Seeding endpoint (dev only)
+  "/api/socket", // Socket.io engine endpoint
   "/_next",      // Next.js build assets
   "/favicon.ico",
   "/images",
@@ -108,7 +111,7 @@ export async function proxy(request: NextRequest) {
 }
 
 /**
- * Matcher: run middleware on all routes EXCEPT Next.js static assets.
+ * Matcher: run proxy on all routes EXCEPT Next.js static assets.
  */
 export const config = {
   matcher: [

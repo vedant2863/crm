@@ -5,6 +5,7 @@ import { Deal } from "../types/deal";
 import { Building, Calendar, TrendingUp, Edit, Trash2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/common";
 
 interface DealItemProps {
     deal: Deal;
@@ -27,9 +28,7 @@ export const DealItem = memo(function DealItem({ deal, stages, onEdit, onDelete,
                         <h3 className="text-lg font-bold truncate">
                             {deal.title}
                         </h3>
-                        <Badge variant="secondary" className={`text-[10px] uppercase tracking-wider font-bold border-none ${currentStage?.color || ""}`}>
-                            {currentStage?.label || deal.stage}
-                        </Badge>
+                        <StatusBadge status={deal.stage} label={currentStage?.label} />
                         <span className="text-lg font-black text-emerald-600 ml-auto">
                             ${deal.value.toLocaleString()}
                         </span>

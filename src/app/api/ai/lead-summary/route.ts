@@ -5,18 +5,21 @@ import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
 import { getPreviousAiCall, hasAiQuota, logAiCall } from "@/lib/ai/rate-limit";
+import { handleApiError, AppError } from "@/lib/errors";
+import { validateObjectId } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw AppError.unauthorized();
     }
 
     const { dealId, force } = await req.json();
     if (!dealId) {
-      return NextResponse.json({ error: "dealId is required" }, { status: 400 });
+      throw AppError.validationFailed("dealId is required");
     }
+    validateObjectId(dealId, "dealId");
 
     const key = `lead-summary:${dealId}`;
 
@@ -37,9 +40,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fetch deal and verify ownership
-    const deal = await Deal.findOne({ _id: dealId, userId: session.user.id });
+    const deal = await Deal.findOne({ _id: dealId, userId: session.user.id })
+      .select("title company value stage priority notes contactName")
+      .maxTimeMS(10_000)
+      .lean();
     if (!deal) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      throw AppError.notFound("Lead not found");
     }
 
     const leadInput = {
@@ -97,7 +103,6 @@ export async function POST(req: NextRequest) {
       isMock: false,
     });
   } catch (error) {
-    console.error("Error in AI Lead Summary route:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

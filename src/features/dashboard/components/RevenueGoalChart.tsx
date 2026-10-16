@@ -1,7 +1,11 @@
 
+"use client";
+
+import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as ChartTooltip } from "recharts";
 import { Button } from "@/components/ui/button";
+
 interface RevenueGoalChartProps {
   wonValue: number;
   revenueProgressData: any[];
@@ -15,8 +19,10 @@ export function RevenueGoalChart({ wonValue, revenueProgressData }: RevenueGoalC
           <h3 className="font-bold text-sm text-foreground">Revenue Goal</h3>
           <p className="text-[10px] text-muted-foreground">Closed-won total</p>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border" onClick={() => window.location.href = "/pipeline"}>
-          <ArrowUpRight className="h-4 w-4" />
+        <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border">
+          <Link href="/pipeline">
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </Button>
       </div>
 
@@ -53,11 +59,11 @@ export function RevenueGoalChart({ wonValue, revenueProgressData }: RevenueGoalC
       </div>
 
       <div className="flex gap-2.5">
-        <Button onClick={() => window.location.href = "/leads"} className="flex-1 rounded-full font-bold h-9 text-xs">
-          + Add Lead
+        <Button asChild className="flex-1 rounded-full font-bold h-9 text-xs">
+          <Link href="/leads">+ Add Lead</Link>
         </Button>
-        <Button onClick={() => window.location.href = "/follow-ups"} variant="outline" className="flex-1 roundedfull font-bold h-9 text-xs">
-          Task
+        <Button asChild variant="outline" className="flex-1 rounded-full font-bold h-9 text-xs">
+          <Link href="/follow-ups">Task</Link>
         </Button>
       </div>
     </div>

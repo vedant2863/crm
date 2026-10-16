@@ -1,6 +1,9 @@
+"use client";
+
 import { ArrowUpDown, Edit, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Deal } from "@/features/deals";
+import { StatusBadge, PriorityBadge } from "@/components/common";
 
 interface LeadTableViewProps {
   sortedLeads: Deal[];
@@ -87,20 +90,10 @@ export function LeadTableView({
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className="flex items-center gap-1.5 font-bold">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stageObj?.color ? undefined : "#94a3b8" }} />
-                      {stageObj?.label || lead.stage}
-                    </span>
+                    <StatusBadge status={lead.stage} label={stageObj?.label} />
                   </td>
                   <td className="p-4">
-                    <span className={cn(
-                      "px-2.5 py-1 rounded-full text-[10px] font-black uppercase border",
-                      lead.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-                        lead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                          "bg-gray-500/10 text-gray-600 border-gray-500/20"
-                    )}>
-                      {lead.priority}
-                    </span>
+                    <PriorityBadge priority={lead.priority} />
                   </td>
                   <td className="p-4">
                     <span className="px-2.5 py-1 rounded-full bg-muted border text-[10px] font-bold">

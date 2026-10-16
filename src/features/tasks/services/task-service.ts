@@ -10,6 +10,7 @@ import User from "@/models/user";
 import "@/models/contact";
 import "@/models/deal";
 import { getOrganizationUserIds } from "@/lib/org-cache";
+import { emitTaskToUsers } from "@/lib/socket/server";
 import {
   afterTaskCreated,
   afterTaskUpdated,
@@ -92,7 +93,10 @@ export async function getTaskById(id: string, userId: string) {
 /** Create a new task */
 export async function createTask(userId: string, data: TaskPayload) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId)
+    .select("name email company role notifications")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const task = new Task({
@@ -115,7 +119,16 @@ export async function createTask(userId: string, data: TaskPayload) {
   const populated = await Task.findById(task._id)
     .populate("contactId", "name company")
     .populate("dealId", "title")
+    .maxTimeMS(10_000)
     .lean();
+
+  // Broadcast real-time task creation
+  const orgUserIds = await getOrganizationUserIds(userId);
+  emitTaskToUsers(orgUserIds, "task:created", {
+    task: populated,
+    userId,
+    userName: user.name,
+  });
 
   return populated;
 }
@@ -123,11 +136,14 @@ export async function createTask(userId: string, data: TaskPayload) {
 /** Update an existing task (scoped to organization/user) */
 export async function updateTask(id: string, userId: string, data: Partial<TaskPayload>) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId)
+    .select("name email company role notifications")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const existingTask = await Task.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const existingTask = await Task.findOne({ _id: id, userId: { $in: orgUserIds } }).maxTimeMS(10_000);
   if (!existingTask) throw new Error("NOT_FOUND");
 
   const oldTask = { ...existingTask.toObject() };
@@ -144,12 +160,20 @@ export async function updateTask(id: string, userId: string, data: Partial<TaskP
     { new: true }
   )
     .populate("contactId", "name company")
-    .populate("dealId", "title");
+    .populate("dealId", "title")
+    .maxTimeMS(10_000);
 
   if (!updated) throw new Error("NOT_FOUND");
 
   // Delegate side-effect business logic hooks
   await afterTaskUpdated(user, userId, oldTask, updated);
+
+  // Broadcast real-time task update
+  emitTaskToUsers(orgUserIds, "task:updated", {
+    task: updated.toObject ? { ...updated.toObject(), _id: updated._id.toString() } : updated,
+    userId,
+    userName: user.name,
+  });
 
   return updated;
 }
@@ -157,11 +181,14 @@ export async function updateTask(id: string, userId: string, data: Partial<TaskP
 /** Delete a task (scoped to organization/user with RBAC) */
 export async function deleteTask(id: string, userId: string) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId)
+    .select("name email company role notifications")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const task = await Task.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const task = await Task.findOne({ _id: id, userId: { $in: orgUserIds } }).maxTimeMS(10_000);
   if (!task) throw new Error("NOT_FOUND");
 
   // RBAC gates: Admin or Creator
@@ -171,10 +198,17 @@ export async function deleteTask(id: string, userId: string) {
     throw new Error("UNAUTHORIZED");
   }
 
-  await Task.findByIdAndDelete(id);
+  await Task.findByIdAndDelete(id).maxTimeMS(10_000);
 
   // Delegate side-effect business logic hooks
   await afterTaskDeleted(user, userId, task);
+
+  // Broadcast real-time task deletion
+  emitTaskToUsers(orgUserIds, "task:deleted", {
+    taskId: id,
+    userId,
+    userName: user.name,
+  });
 
   return { id };
 }

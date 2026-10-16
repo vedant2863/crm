@@ -1,2 +1,11 @@
 export { useDeals } from "./hooks/useDeals";
+export { useDealSocket } from "./hooks/useDealSocket";
+export { DEAL_STAGES } from "./constants/deatstage";
 export * from "./types/deal";
+export { default as PipelineBoard } from "./components/PipelineBoard";
+export { DealDialog } from "./components/DealDialog";
+export { default as DealList } from "./components/DealList";
+export { DealItem } from "./components/DealItem";
+export { DealFilters } from "./components/DealFilters";
+export { DealStats } from "./components/DealStats";
+export { PipelineView, default as PipelineViewDefault } from "./components/PipelineView";

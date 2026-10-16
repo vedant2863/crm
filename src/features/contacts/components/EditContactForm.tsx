@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Contact } from "../types/type";
-import CommentsSection from "@/features/enterprise/components/CommentsSection";
+import { CommentsSection } from "@/features/enterprise";
 
 interface EditContactFormProps {
   contact: Contact;

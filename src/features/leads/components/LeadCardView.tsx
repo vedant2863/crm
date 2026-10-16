@@ -1,7 +1,9 @@
+"use client";
+
 import { Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Deal } from "@/features/deals";
+import { StatusBadge, PriorityBadge } from "@/components/common";
 
 interface LeadCardViewProps {
   sortedLeads: Deal[];
@@ -57,17 +59,8 @@ export function LeadCardView({
 
             {/* Badges row */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="secondary" className={cn("text-[9px] uppercase tracking-wider font-bold border-none", stageObj?.color)}>
-                {stageObj?.label || lead.stage}
-              </Badge>
-              <span className={cn(
-                "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border",
-                lead.priority === "high" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-                  lead.priority === "medium" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                    "bg-gray-500/10 text-gray-600 border-gray-500/20"
-              )}>
-                {lead.priority}
-              </span>
+              <StatusBadge status={lead.stage} label={stageObj?.label} />
+              <PriorityBadge priority={lead.priority} />
               <span className="px-2 py-0.5 rounded-full bg-muted border text-[9px] font-bold">
                 {source}
               </span>

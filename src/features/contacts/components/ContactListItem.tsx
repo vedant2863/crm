@@ -1,3 +1,5 @@
+"use client";
+
 import { memo } from "react";
 import { Building, Edit, Mail, MapPin, Phone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

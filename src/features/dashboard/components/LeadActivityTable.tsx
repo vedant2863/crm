@@ -1,3 +1,6 @@
+"use client";
+
+import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,8 +17,10 @@ export function LeadActivityTable({ recentMovements }: LeadActivityTableProps) {
           <h3 className="font-bold text-sm text-foreground">Lead Activity</h3>
           <p className="text-[10px] text-muted-foreground">Recent lead movements</p>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border" onClick={() => window.location.href = "/leads"}>
-          <ArrowUpRight className="h-4 w-4" />
+        <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border">
+          <Link href="/leads">
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </Button>
       </div>
       <div className="overflow-x-auto">

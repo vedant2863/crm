@@ -5,6 +5,7 @@ import { Task } from "../types/task";
 import { CheckCircle2, Calendar, User, Flag, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge, PriorityBadge } from "@/components/common";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,19 +23,6 @@ interface TaskItemProps {
 export const TaskItem = memo(function TaskItem({ task, onToggleStatus, onDelete, onEdit }: TaskItemProps) {
     const isCompleted = task.status === "completed";
     const overdue = task.dueDate && !isCompleted && new Date(task.dueDate) < new Date();
-
-    const priorityColors = {
-        low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-        medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-        high: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    };
-
-    const statusColors = {
-        pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-        in_progress: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-        completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-        cancelled: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-    };
 
     return (
         <div
@@ -61,12 +49,8 @@ export const TaskItem = memo(function TaskItem({ task, onToggleStatus, onDelete,
                         <h3 className={`text-base font-semibold truncate ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
                             {task.title}
                         </h3>
-                        <Badge variant="secondary" className={`text-[10px] uppercase tracking-wider font-bold border-none ${statusColors[task.status as keyof typeof statusColors]}`}>
-                            {task.status.replace("_", " ")}
-                        </Badge>
-                        <Badge variant="secondary" className={`text-[10px] uppercase tracking-wider font-bold border-none ${priorityColors[task.priority as keyof typeof priorityColors]}`}>
-                            {task.priority}
-                        </Badge>
+                        <StatusBadge status={task.status} />
+                        <PriorityBadge priority={task.priority} />
                         {overdue && (
                             <Badge variant="destructive" className="text-[10px] uppercase tracking-wider font-bold animate-pulse">
                                 Overdue

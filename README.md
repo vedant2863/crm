@@ -184,6 +184,7 @@ Open [http://localhost:3000](http://localhost:3000) and sign in using the demo c
 | `/api/ai/lead-summary` | `POST` | Get Gemini summary & risk metrics for a lead |
 | `/api/ai/email-generator` | `POST` | Draft structured sales email by tone and purpose |
 | `/api/ai/sales-insights` | `POST` | Analyze pipeline and return health score & suggestions |
+| `/healthz` | `GET` / `HEAD` | Production health check probe (DB ping, Socket.io status, memory, uptime) |
 
 ---
 

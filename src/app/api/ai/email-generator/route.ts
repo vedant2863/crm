@@ -5,18 +5,21 @@ import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
 import { getPreviousAiCall, hasAiQuota, logAiCall } from "@/lib/ai/rate-limit";
+import { handleApiError, AppError } from "@/lib/errors";
+import { validateObjectId } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw AppError.unauthorized();
     }
 
     const { dealId, purpose, tone, force } = await req.json();
     if (!dealId || !purpose || !tone) {
-      return NextResponse.json({ error: "dealId, purpose, and tone are required" }, { status: 400 });
+      throw AppError.validationFailed("dealId, purpose, and tone are required");
     }
+    validateObjectId(dealId, "dealId");
 
     const key = `email-generator:${dealId}:${purpose}:${tone}`;
 
@@ -37,9 +40,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fetch deal and verify ownership
-    const deal = await Deal.findOne({ _id: dealId, userId: session.user.id });
+    const deal = await Deal.findOne({ _id: dealId, userId: session.user.id })
+      .select("contactName company title")
+      .maxTimeMS(10_000)
+      .lean();
     if (!deal) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      throw AppError.notFound("Lead not found");
     }
 
     const emailInput = {
@@ -93,7 +99,6 @@ export async function POST(req: NextRequest) {
       isMock: false,
     });
   } catch (error) {
-    console.error("Error in AI Email Generator route:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

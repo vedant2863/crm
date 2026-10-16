@@ -1,13 +1,13 @@
 import { Users } from "lucide-react";
+import { EmptyState } from "@/components/common";
 
-export default function EmptyContactState() {
+export default function EmptyContactState({ onAdd }: { onAdd?: () => void }) {
   return (
-    <div className="text-center py-8">
-      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <p className="text-gray-600">No contacts found</p>
-      <p className="text-sm text-gray-500">
-        Try adjusting your search or filters
-      </p>
-    </div>
+    <EmptyState
+      icon={Users}
+      title="No contacts found"
+      description="Try adjusting your search or filters to find what you are looking for."
+      action={onAdd ? { label: "Add Contact", onClick: onAdd } : undefined}
+    />
   );
 }

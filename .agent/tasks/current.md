@@ -10,3 +10,28 @@
 - **Repository AI Operating Manual:** (Completed)
   - Reorganize and split `.agent/` documentation.
   - Add `AGENTS.md` at root.
+- **Real-Time Socket.io Integration:** (Completed)
+  - Custom HTTP server with Socket.io server attachment (`server.ts`, `src/lib/socket/server.ts`).
+  - Scoped organization/user real-time room broadcasting for Deals, Tasks, Contacts, and Notifications.
+  - Client-side singleton connection (`src/lib/socket/socket-client.ts`) and reactive hooks (`useDealSocket`, `useTasks`, `useContacts`, `useNotifications`).
+  - Instant live notifications push with `react-hot-toast` alerts and optimistic state synchronization across collaborative users.
+- **Feature-Sliced / Domain-Driven Architecture Refactoring:** (Completed)
+  - Transformed `src/app/` into a pure **Routing Layer ONLY**.
+  - All route `page.tsx` files delegate rendering to domain feature views from `@/features/<domain>`.
+  - Refactored domains: `auth`, `dashboard`, `leads`, `deals`, `contacts`, `tasks`, `notes`, `settings`, `search`, `enterprise`, and `marketing`.
+  - Created standardized feature barrels (`src/features/<domain>/index.ts`) and unified directory architecture.
+  - Cleaned up obsolete app-level subcomponent folders.
+- **Frontend Common Reusable Components & Next.js Turbopack Hardening:** (Completed)
+  - Fixed Turbopack React Server Component boundaries by adding `"use client"` directives to all client hooks and components.
+  - Built comprehensive suite of reusable compound UI components in `src/components/common/` (`PageHeader`, `EmptyState`, `MetricCard`, `StatusBadge`, `PriorityBadge`, `ConfirmDialog`, `SearchInput`, `ViewToggle`, `ErrorState`, `LoadingSkeleton`, `AuthRequired`).
+  - Exported through `src/components/common/index.ts` and `src/components/index.ts`.
+  - Refactored all domain feature views (`contacts`, `leads`, `tasks`, `deals`, `notes`, `settings`, `dashboard`, `search`) to eliminate duplicate UI code, standardize headers, metrics, search, view toggles, loading skeletons, and replace window.confirm with accessible `ConfirmDialog`.
+- **Repository-Wide Architecture & Security Audit:** (Completed)
+  - Configured official Next.js 16 network proxy (`src/proxy.ts`) with route matchers for session token verification and in-memory rate limiting (migrated from deprecated `middleware.ts`).
+  - Hardened all domain database queries across `contacts`, `deals`, `tasks`, `notes`, `notifications`, `settings`, and `enterprise` services with `.maxTimeMS(10_000)` and `.lean()` execution timeouts.
+  - Eliminated native browser `prompt()` and `confirm()` calls across all views and tabs, introducing fully styled, accessible in-page password update forms and dialogs.
+  - Replaced full-page hard refreshes (`window.location.href`) with Next.js client-side navigation (`<Link href="...">`).
+  - Resolved circular feature barrel self-imports in `tasks`, `contacts`, `notifications`, and `enterprise`.
+  - Re-used global shared components (`Logo`, `MetricCard`, `StatusBadge`, `PriorityBadge`) uniformly across views.
+  - Synchronized `.env.example` with 100% of codebase environment variable references.
+

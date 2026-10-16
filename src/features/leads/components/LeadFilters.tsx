@@ -1,8 +1,9 @@
+"use client";
 
-import { Search, Table, Grid, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SearchInput, ViewToggle } from "@/components/common";
 
 interface LeadFiltersProps {
   searchTerm: string;
@@ -49,26 +50,26 @@ export function LeadFilters({
     <div className="bg-card border rounded-3xl p-5 shadow-sm space-y-4">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Search Box */}
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, company or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <SearchInput
+          placeholder="Search by name, company or email..."
+          value={searchTerm}
+          onChange={setSearchTerm}
+          className="w-full md:max-w-md"
+        />
 
-        <div className="flex flex-wrap gap-3 w-full md:w-auto">
+        {/* Filters and Mode Buttons */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
           {/* Priority Filter */}
           <select
             value={selectedPriority}
             onChange={(e) => setSelectedPriority(e.target.value)}
-            className="p-3 text-xs font-bold rounded-2xl border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-10 px-3 rounded-xl border bg-background text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value="all">All priorities</option>
+            <option value="all">Priority: All</option>
             {PRIORITIES.map((p) => (
-              <option key={p} value={p}>{p.toUpperCase()}</option>
+              <option key={p} value={p}>
+                {p.toUpperCase()}
+              </option>
             ))}
           </select>
 
@@ -76,33 +77,25 @@ export function LeadFilters({
           <select
             value={selectedSource}
             onChange={(e) => setSelectedSource(e.target.value)}
-            className="p-3 text-xs font-bold rounded-2xl border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-10 px-3 rounded-xl border bg-background text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value="all">All sources</option>
+            <option value="all">Source: All</option>
             {SOURCES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
 
-          {/* Layout Toggle (List vs Card) */}
-          <div className="flex border rounded-full p-1 bg-muted/30">
-            <Button
-              variant={viewMode === "table" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("table")}
-              className="rounded-full h-8"
-            >
-              <Table className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "card" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("card")}
-              className="rounded-full h-8"
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* Table vs Card Toggle */}
+          <ViewToggle<"table" | "card">
+            mode={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: "table", label: "Table" },
+              { value: "card", label: "Grid" },
+            ]}
+          />
         </div>
       </div>
 
@@ -139,20 +132,26 @@ export function LeadFilters({
           })}
         </div>
 
-        <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
-          {selectedIds.length > 0 && (
+        {/* Bulk Action Controls */}
+        {selectedIds.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground">
+              {selectedIds.length} selected
+            </span>
             <Button
               variant="destructive"
               size="sm"
               onClick={handleBulkDelete}
-              className="rounded-full text-xs h-8 px-4"
+              className="h-8 shadow-sm"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Selected ({selectedIds.length})
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              Delete Selected
             </Button>
-          )}
-          <span>{sortedLeadsLength} of {totalLeads}</span>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+export default LeadFilters;

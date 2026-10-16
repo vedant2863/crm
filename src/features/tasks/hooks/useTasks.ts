@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 
 import {
@@ -7,6 +9,8 @@ import {
 } from "@/features/tasks/services/task-client-service";
 import { Task } from "@/features/tasks/types/task";
 import { useSession } from "@/lib/auth/auth-client";
+import { getSocketClient } from "@/lib/socket/socket-client";
+import toast from "react-hot-toast";
 
 export interface UseTasksOptions {
   search?: string;
@@ -17,7 +21,7 @@ export interface UseTasksOptions {
 }
 
 export function useTasks(options: UseTasksOptions = {}) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +112,80 @@ export function useTasks(options: UseTasksOptions = {}) {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  // Real-time Socket.IO synchronization for tasks
+  useEffect(() => {
+    if (typeof window === "undefined" || status !== "authenticated") return;
+
+    const socket = getSocketClient();
+
+    const joinRoom = () => {
+      if (session?.user?.id) {
+        socket.emit("join:pipeline", {
+          userId: session.user.id,
+          company: (session.user as { company?: string })?.company,
+        });
+      }
+    };
+
+    if (socket.connected) {
+      joinRoom();
+    }
+    socket.on("connect", joinRoom);
+
+    const handleTaskCreated = (payload: {
+      task: Task;
+      userId: string;
+      userName: string;
+    }) => {
+      setTasks((prev) => [
+        payload.task,
+        ...prev.filter((t) => t._id !== payload.task._id),
+      ]);
+      if (payload.userId !== session?.user?.id && payload.userName) {
+        toast(`📋 ${payload.userName} created task: "${payload.task.title}"`, {
+          icon: "⚡",
+        });
+      }
+    };
+
+    const handleTaskUpdated = (payload: {
+      task: Task;
+      userId: string;
+      userName: string;
+    }) => {
+      setTasks((prev) =>
+        prev.map((t) => (t._id === payload.task._id ? payload.task : t)),
+      );
+      if (payload.userId !== session?.user?.id && payload.userName) {
+        toast(`🔄 ${payload.userName} updated task: "${payload.task.title}"`, {
+          icon: "⚡",
+        });
+      }
+    };
+
+    const handleTaskDeleted = (payload: {
+      taskId: string;
+      userId: string;
+      userName: string;
+    }) => {
+      setTasks((prev) => prev.filter((t) => t._id !== payload.taskId));
+      if (payload.userId !== session?.user?.id && payload.userName) {
+        toast(`🗑️ ${payload.userName} deleted a task`, { icon: "⚡" });
+      }
+    };
+
+    socket.on("task:created", handleTaskCreated);
+    socket.on("task:updated", handleTaskUpdated);
+    socket.on("task:deleted", handleTaskDeleted);
+
+    return () => {
+      socket.off("connect", joinRoom);
+      socket.off("task:created", handleTaskCreated);
+      socket.off("task:updated", handleTaskUpdated);
+      socket.off("task:deleted", handleTaskDeleted);
+    };
+  }, [session, status]);
 
   const refetch = useCallback(() => {
     fetchTasks();

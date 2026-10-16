@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Deal } from "../types/deal";
 import { CreateDealRequest } from "../services/deal-client-service";
 import { DEAL_STAGES } from "../constants/deatstage";
-import CommentsSection from "@/features/enterprise/components/CommentsSection";
+import { CommentsSection } from "@/features/enterprise";
 
 interface EditDealFormProps {
   deal: Deal;

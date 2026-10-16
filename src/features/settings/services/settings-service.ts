@@ -27,7 +27,10 @@ export interface ProfileUpdatePayload {
 /** Fetch user settings (no password) */
 export async function getUserSettings(userId: string) {
   await dbConnect();
-  const user = await User.findById(userId).select("-password");
+  const user = await User.findById(userId)
+    .select("-password")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("NOT_FOUND");
   return user;
 }
@@ -40,7 +43,9 @@ export async function updateUserSettings(userId: string, data: ProfileUpdatePayl
     userId,
     { ...data },
     { new: true, select: "-password" }
-  );
+  )
+    .maxTimeMS(10_000)
+    .lean();
 
   if (!updated) throw new Error("NOT_FOUND");
   return updated;
@@ -50,12 +55,15 @@ export async function updateUserSettings(userId: string, data: ProfileUpdatePayl
 export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
   await dbConnect();
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId)
+    .select("password")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("NOT_FOUND");
 
   const isValid = await bcrypt.compare(currentPassword, user.password);
   if (!isValid) throw new Error("INVALID_PASSWORD");
 
   const hashed = await bcrypt.hash(newPassword, 12);
-  await User.findByIdAndUpdate(userId, { password: hashed });
+  await User.findByIdAndUpdate(userId, { password: hashed }).maxTimeMS(10_000);
 }

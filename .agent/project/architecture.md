@@ -15,3 +15,12 @@ A custom generic `TTLCache` in `src/lib/cache.ts` prevents database read storms:
 - **Org Cache:** Cached for 60 seconds.
 - **Dashboard Cache:** KPI/metrics endpoints are cached for 30 seconds.
 - **Notification Scan Cache:** Tasks scan is cached for 5 minutes.
+
+## Real-Time Event Architecture (Socket.IO)
+- **Custom Server Integration:** Built with an attached Socket.IO instance on custom Node HTTP server (`server.ts`, `src/lib/socket/server.ts`).
+- **Room Topology:** Clients connect via singleton client (`src/lib/socket/socket-client.ts`) and join user-scoped (`user:${userId}`) and company-scoped (`company:${company}`) rooms.
+- **Event Domains:**
+  - **Deals:** `deal:created`, `deal:updated`, `deal:deleted`
+  - **Tasks:** `task:created`, `task:updated`, `task:deleted`
+  - **Contacts:** `contact:created`, `contact:updated`, `contact:deleted`
+  - **Notifications:** Direct real-time push via `notification:created` with immediate UI sync and toast popups.

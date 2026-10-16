@@ -1,3 +1,4 @@
+
 /**
  * features/contacts/services/contact-service.ts
  *
@@ -8,6 +9,7 @@ import dbConnect from "@/lib/dbConnect";
 import Contact from "@/models/contact";
 import User from "@/models/user";
 import { getOrganizationUserIds } from "@/lib/org-cache";
+import { emitContactToUsers } from "@/lib/socket/server";
 import {
   afterContactCreated,
   afterContactUpdated,
@@ -74,11 +76,11 @@ export async function getContacts({ userId, search, page = 1, limit = 50 }: Cont
 /** Create a new contact */
 export async function createContact(userId: string, data: ContactPayload) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId).select("name email company role notifications").maxTimeMS(10_000).lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const existing = await Contact.findOne({ userId: { $in: orgUserIds }, email: data.email }).lean();
+  const existing = await Contact.findOne({ userId: { $in: orgUserIds }, email: data.email }).maxTimeMS(10_000).lean();
   if (existing) throw new Error("DUPLICATE_EMAIL");
 
   const contact = await Contact.create({
@@ -91,17 +93,24 @@ export async function createContact(userId: string, data: ContactPayload) {
   // Delegate side-effect business logic hooks (pass user to avoid re-fetch)
   await afterContactCreated(user, userId, contact);
 
+  // Broadcast real-time contact creation
+  emitContactToUsers(orgUserIds, "contact:created", {
+    contact: { ...contact.toObject(), _id: contact._id.toString() },
+    userId,
+    userName: user.name,
+  });
+
   return contact;
 }
 
 /** Update an existing contact (scoped to organization/user) */
 export async function updateContact(id: string, userId: string, data: ContactUpdatePayload) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId).select("name email company role notifications").maxTimeMS(10_000).lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const existingContact = await Contact.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const existingContact = await Contact.findOne({ _id: id, userId: { $in: orgUserIds } }).maxTimeMS(10_000);
   if (!existingContact) throw new Error("NOT_FOUND");
 
   const oldContact = { ...existingContact.toObject() };
@@ -118,12 +127,19 @@ export async function updateContact(id: string, userId: string, data: ContactUpd
       status: newStatus,
     },
     { new: true }
-  );
+  ).maxTimeMS(10_000);
 
   if (!updated) throw new Error("NOT_FOUND");
 
   // Delegate side-effect business logic hooks
   await afterContactUpdated(user, userId, oldContact, updated);
+
+  // Broadcast real-time contact update
+  emitContactToUsers(orgUserIds, "contact:updated", {
+    contact: { ...updated.toObject(), _id: updated._id.toString() },
+    userId,
+    userName: user.name,
+  });
 
   return updated;
 }
@@ -131,11 +147,11 @@ export async function updateContact(id: string, userId: string, data: ContactUpd
 /** Delete a contact (with RBAC - Admin or Creator only) */
 export async function deleteContact(id: string, userId: string) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId).select("name email company role notifications").maxTimeMS(10_000).lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const contact = await Contact.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const contact = await Contact.findOne({ _id: id, userId: { $in: orgUserIds } }).maxTimeMS(10_000);
   if (!contact) throw new Error("NOT_FOUND");
 
   // RBAC enforcement: Creator or Admin only
@@ -145,10 +161,17 @@ export async function deleteContact(id: string, userId: string) {
     throw new Error("UNAUTHORIZED");
   }
 
-  await Contact.findByIdAndDelete(id);
+  await Contact.findByIdAndDelete(id).maxTimeMS(10_000);
 
   // Delegate side-effect business logic hooks
   await afterContactDeleted(user, userId, contact);
+
+  // Broadcast real-time contact deletion
+  emitContactToUsers(orgUserIds, "contact:deleted", {
+    contactId: id,
+    userId,
+    userName: user.name,
+  });
 
   return { id };
 }

@@ -8,6 +8,7 @@ import dbConnect from "@/lib/dbConnect";
 import Notification from "@/models/notification";
 import Task from "@/models/task";
 import { notificationScanCache } from "@/lib/cache";
+import { emitNotificationToUser } from "@/lib/socket/server";
 
 export interface CreateNotificationPayload {
   title: string;
@@ -23,7 +24,7 @@ export async function createNotification(
   data: CreateNotificationPayload
 ) {
   await dbConnect();
-  return await Notification.create({
+  const notification = await Notification.create({
     userId,
     title: data.title,
     message: data.message,
@@ -32,6 +33,20 @@ export async function createNotification(
     referenceType: data.referenceType || null,
     read: false,
   });
+
+  // Push real-time notification to the user via Socket.IO
+  emitNotificationToUser(userId, {
+    _id: notification._id.toString(),
+    title: notification.title,
+    message: notification.message,
+    type: notification.type,
+    referenceId: notification.referenceId,
+    referenceType: notification.referenceType,
+    read: false,
+    createdAt: notification.createdAt ? notification.createdAt.toISOString() : new Date().toISOString(),
+  });
+
+  return notification;
 }
 
 /** Scan for tasks due tomorrow and auto-generate notifications if missing */
@@ -66,7 +81,9 @@ async function scanAndGenerateTaskNotifications(userId: string) {
         userId,
         type: "task",
         referenceId: typedTask._id,
-      }).lean();
+      })
+        .maxTimeMS(5_000)
+        .lean();
 
       if (!exists) {
         await Notification.create({
@@ -111,7 +128,9 @@ export async function markAsRead(id: string, userId: string) {
     { _id: id, userId },
     { read: true },
     { new: true }
-  );
+  )
+    .maxTimeMS(10_000)
+    .lean();
   if (!updated) throw new Error("NOT_FOUND");
   return updated;
 }
@@ -119,6 +138,6 @@ export async function markAsRead(id: string, userId: string) {
 /** Mark all notifications as read for a user */
 export async function markAllAsRead(userId: string) {
   await dbConnect();
-  await Notification.updateMany({ userId, read: false }, { read: true });
+  await Notification.updateMany({ userId, read: false }, { read: true }).maxTimeMS(10_000);
   return { success: true };
 }

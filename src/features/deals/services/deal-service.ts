@@ -13,6 +13,7 @@ import {
   afterDealUpdated,
   afterDealDeleted,
 } from "@/features/enterprise/services/business-logic";
+import { emitDealToUsers } from "@/lib/socket/server";
 
 export interface DealFilters {
   userId: string;
@@ -92,7 +93,10 @@ export async function getDealById(id: string, userId: string) {
 /** Create a new deal */
 export async function createDeal(userId: string, data: DealPayload) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId)
+    .select("name email company role notifications")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const deal = new Deal({
@@ -110,17 +114,28 @@ export async function createDeal(userId: string, data: DealPayload) {
   // Delegate side-effect business logic hooks
   await afterDealCreated(user, userId, deal);
 
+  // Broadcast real-time deal creation
+  const orgUserIds = await getOrganizationUserIds(userId);
+  emitDealToUsers(orgUserIds, "deal:created", {
+    deal: { ...deal.toObject(), _id: deal._id.toString() },
+    userId,
+    userName: user.name,
+  });
+
   return deal;
 }
 
 /** Update an existing deal (scoped to organization/user) */
 export async function updateDeal(id: string, userId: string, data: Partial<DealPayload>) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId)
+    .select("name email company role notifications")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const existingDeal = await Deal.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const existingDeal = await Deal.findOne({ _id: id, userId: { $in: orgUserIds } }).maxTimeMS(10_000);
   if (!existingDeal) throw new Error("NOT_FOUND");
 
   const oldDeal = { ...existingDeal.toObject() };
@@ -133,12 +148,21 @@ export async function updateDeal(id: string, userId: string, data: Partial<DealP
       lastActivity: new Date().toISOString(),
     },
     { new: true }
-  );
+  ).maxTimeMS(10_000);
 
   if (!updated) throw new Error("NOT_FOUND");
 
   // Delegate side-effect business logic hooks
   await afterDealUpdated(user, userId, oldDeal, updated);
+
+  // Broadcast real-time deal update
+  emitDealToUsers(orgUserIds, "deal:updated", {
+    deal: { ...updated.toObject(), _id: updated._id.toString() },
+    oldStage: oldDeal.stage,
+    newStage: updated.stage,
+    userId,
+    userName: user.name,
+  });
 
   return updated;
 }
@@ -146,11 +170,14 @@ export async function updateDeal(id: string, userId: string, data: Partial<DealP
 /** Delete a deal (scoped to organization/user with RBAC) */
 export async function deleteDeal(id: string, userId: string) {
   await dbConnect();
-  const user = await User.findById(userId).select("name email company role notifications").lean();
+  const user = await User.findById(userId)
+    .select("name email company role notifications")
+    .maxTimeMS(10_000)
+    .lean();
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const orgUserIds = await getOrganizationUserIds(userId);
-  const deal = await Deal.findOne({ _id: id, userId: { $in: orgUserIds } });
+  const deal = await Deal.findOne({ _id: id, userId: { $in: orgUserIds } }).maxTimeMS(10_000);
   if (!deal) throw new Error("NOT_FOUND");
 
   // RBAC gates: Admin or Creator
@@ -160,10 +187,17 @@ export async function deleteDeal(id: string, userId: string) {
     throw new Error("UNAUTHORIZED");
   }
 
-  await Deal.findByIdAndDelete(id);
+  await Deal.findByIdAndDelete(id).maxTimeMS(10_000);
 
   // Delegate side-effect business logic hooks
   await afterDealDeleted(user, userId, deal);
+
+  // Broadcast real-time deal deletion
+  emitDealToUsers(orgUserIds, "deal:deleted", {
+    dealId: id,
+    userId,
+    userName: user.name,
+  });
 
   return { id };
 }

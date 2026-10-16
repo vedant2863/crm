@@ -5,12 +5,13 @@ import Deal from "@/models/deal";
 import { getAIProvider } from "@/lib/ai";
 import { AIService } from "@/lib/ai/service";
 import { getPreviousAiCall, hasAiQuota, logAiCall, getAiRemaining } from "@/lib/ai/rate-limit";
+import { handleApiError, AppError } from "@/lib/errors";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw AppError.unauthorized();
     }
 
     const { searchParams } = new URL(req.url);
@@ -36,7 +37,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const deals = await Deal.find({ userId: session.user.id }).lean();
+    const deals = await Deal.find({ userId: session.user.id })
+      .select("title value stage priority company")
+      .maxTimeMS(10_000)
+      .lean();
     const formattedDeals = (deals as unknown as {
       title: string; value: number; stage: string; priority: string; company?: string;
     }[]).map(d => ({ title: d.title, value: d.value, stage: d.stage, priority: d.priority, company: d.company }));
@@ -107,7 +111,6 @@ export async function GET(req: NextRequest) {
       remaining: updatedRemaining,
     });
   } catch (error) {
-    console.error("Error in AI Sales Insights route:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

@@ -1,3 +1,4 @@
+"use client";
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip } from "recharts";
 import { cn } from "@/lib/utils";

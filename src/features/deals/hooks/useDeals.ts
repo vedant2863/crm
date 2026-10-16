@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 
 import {
@@ -7,12 +9,15 @@ import {
 } from "@/features/deals/services/deal-client-service";
 import { Deal } from "@/features/deals/types/deal";
 import { useSession } from "@/lib/auth/auth-client";
+import { useDealSocket } from "./useDealSocket";
 
 export interface UseDealsOptions {
   search?: string;
   stage?: string;
   page?: number;
   limit?: number;
+  realtime?: boolean;
+  showToasts?: boolean;
 }
 
 export function useDeals(options: UseDealsOptions = {}) {
@@ -25,6 +30,24 @@ export function useDeals(options: UseDealsOptions = {}) {
     limit: 10,
     total: 0,
     pages: 0,
+  });
+
+  const { isConnected } = useDealSocket({
+    showToasts: options.showToasts ?? true,
+    onDealCreated: (newDeal) => {
+      setDeals((prev) => {
+        if (prev.some((d) => d._id === newDeal._id)) return prev;
+        return [newDeal, ...prev];
+      });
+    },
+    onDealUpdated: (updatedDeal) => {
+      setDeals((prev) =>
+        prev.map((d) => (d._id === updatedDeal._id ? { ...d, ...updatedDeal } : d))
+      );
+    },
+    onDealDeleted: (deletedDealId) => {
+      setDeals((prev) => prev.filter((d) => d._id !== deletedDealId));
+    },
   });
 
   const fetchDeals = useCallback(async () => {
@@ -109,6 +132,7 @@ export function useDeals(options: UseDealsOptions = {}) {
     loading,
     error,
     pagination,
+    isConnected,
     createDeal,
     updateDeal,
     deleteDeal,

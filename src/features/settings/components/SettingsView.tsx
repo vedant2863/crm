@@ -1,0 +1,315 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+import { User as UserIcon, Bell, Shield, Database } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileTab } from "@/features/settings/components/ProfileTab";
+import { NotificationsTab } from "@/features/settings/components/NotificationsTab";
+import { SecurityTab } from "@/features/settings/components/SecurityTab";
+import { DataTab } from "@/features/settings/components/DataTab";
+import AuditLogsTab from "@/features/settings/components/AuditLogsTab";
+import toast from "react-hot-toast";
+import { useSession } from "@/lib/auth/auth-client";
+import { PageHeader, LoadingSkeleton, AuthRequired } from "@/components/common";
+
+interface UserSettings {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  position: string;
+  timezone: string;
+  language: string;
+  notifications: {
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    dealUpdates: boolean;
+    taskReminders: boolean;
+    contactActivities: boolean;
+    weeklyReports: boolean;
+  };
+  security: {
+    twoFactorAuth: boolean;
+    sessionTimeout: number;
+    loginHistory: boolean;
+  };
+}
+
+export function SettingsView() {
+  const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === "admin";
+  const [loading, setLoading] = useState(false);
+
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    position: "",
+    timezone: "UTC-8",
+    language: "en",
+  });
+
+  const [notifications, setNotifications] = useState({
+    emailNotifications: true,
+    pushNotifications: false,
+    dealUpdates: true,
+    taskReminders: true,
+    contactActivities: false,
+    weeklyReports: true,
+  });
+
+  const [security, setSecurity] = useState({
+    twoFactorAuth: false,
+    sessionTimeout: 30,
+    loginHistory: true,
+  });
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const fetchUserSettings = async () => {
+    try {
+      const response = await fetch("/api/settings");
+      if (response.ok) {
+        const data = await response.json();
+        const user = data.user;
+        setProfile({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          company: user.company || "",
+          position: user.position || "",
+          timezone: user.timezone || "UTC-8",
+          language: user.language || "en",
+        });
+        if (user.notifications) setNotifications(user.notifications);
+        if (user.security) setSecurity(user.security);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(err);
+        toast.error(`${err.message}`);
+      } else {
+        toast.error("Failed to load settings");
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUserSettings();
+    }
+  }, [session]);
+
+  const handleUpdateSettings = async (data: UserSettings) => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (response.ok) {
+        toast.success("Settings updated successfully");
+      } else {
+        throw new Error("Update failed");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
+      toast.error("Failed to update settings");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "change-password",
+          currentPassword,
+          newPassword,
+        }),
+      });
+      if (response.ok) {
+        toast.success("Password changed successfully");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        const err = await response.json();
+        toast.error(err.error || "Failed to change password");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
+      toast.error("An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (status === "loading") {
+    return <LoadingSkeleton type="page" />;
+  }
+
+  if (status === "unauthenticated") {
+    return <AuthRequired description="Please log in to access your account settings." />;
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <PageHeader
+        title="Settings"
+        description="Manage your account preferences and global configuration."
+      />
+
+      <Tabs defaultValue="profile" orientation="vertical" className="w-full">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <aside className="lg:w-64 shrink-0">
+            <TabsList className="flex flex-col h-auto w-full bg-transparent gap-1 p-0">
+              {[
+                { value: "profile", label: "Profile", icon: UserIcon },
+                { value: "notifications", label: "Notifications", icon: Bell },
+                { value: "security", label: "Security", icon: Shield },
+                { value: "data", label: "Data & Privacy", icon: Database },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="w-full justify-start gap-3 px-4 py-3 h-auto data-[state=active]:bg-primary/10 data-[state=active]:text-primary transition-all hover:bg-muted font-bold uppercase tracking-wider text-[10px]"
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+              {isAdmin && (
+                <TabsTrigger
+                  value="audit-logs"
+                  className="w-full justify-start gap-3 px-4 py-3 h-auto data-[state=active]:bg-primary/10 data-[state=active]:text-primary transition-all hover:bg-muted font-bold uppercase tracking-wider text-[10px]"
+                >
+                  <Shield className="h-4 w-4" />
+                  Security Audit Logs
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </aside>
+
+          <main className="flex-1">
+            <Card className="border-none shadow-none bg-transparent">
+              <TabsContent
+                value="profile"
+                className="mt-0 focus-visible:ring-0"
+              >
+                <Card className="border shadow-sm rounded-2xl overflow-hidden">
+                  <ProfileTab
+                    profile={profile}
+                    setProfile={setProfile}
+                    loading={loading}
+                    onSave={(e) => {
+                      e.preventDefault();
+                      handleUpdateSettings({
+                        ...profile,
+                        notifications,
+                        security,
+                      });
+                    }}
+                  />
+                </Card>
+              </TabsContent>
+
+              <TabsContent
+                value="notifications"
+                className="mt-0 focus-visible:ring-0"
+              >
+                <Card className="border shadow-sm rounded-2xl overflow-hidden">
+                  <NotificationsTab
+                    notifications={notifications}
+                    setNotifications={setNotifications}
+                    loading={loading}
+                    onSave={() =>
+                      handleUpdateSettings({
+                        ...profile,
+                        notifications,
+                        security,
+                      })
+                    }
+                  />
+                </Card>
+              </TabsContent>
+
+              <TabsContent
+                value="security"
+                className="mt-0 focus-visible:ring-0"
+              >
+                <SecurityTab
+                  security={security}
+                  setSecurity={setSecurity}
+                  loading={loading}
+                  onSave={() =>
+                    handleUpdateSettings({
+                      ...profile,
+                      notifications,
+                      security,
+                    })
+                  }
+                  onPasswordChange={handlePasswordChange}
+                  currentPassword={currentPassword}
+                  setCurrentPassword={setCurrentPassword}
+                  newPassword={newPassword}
+                  setNewPassword={setNewPassword}
+                  confirmPassword={confirmPassword}
+                  setConfirmPassword={setConfirmPassword}
+                />
+              </TabsContent>
+
+              <TabsContent value="data" className="mt-0 focus-visible:ring-0">
+                <DataTab
+                  onImport={() => toast("Import feature coming soon")}
+                  onDeleteAccount={() =>
+                    toast.error("Please contact support to delete account")
+                  }
+                />
+              </TabsContent>
+
+              {isAdmin && (
+                <TabsContent
+                  value="audit-logs"
+                  className="mt-0 focus-visible:ring-0"
+                >
+                  <AuditLogsTab />
+                </TabsContent>
+              )}
+            </Card>
+          </main>
+        </div>
+      </Tabs>
+    </div>
+  );
+}
+
+export default SettingsView;

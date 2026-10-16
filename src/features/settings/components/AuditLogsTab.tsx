@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import {
   fetchAuditLogs,
   ClientAuditLog,
-} from "@/features/enterprise/services/enterprise-client-service";
+} from "@/features/enterprise";
 import { ShieldAlert, ShieldCheck, Clock, User, Globe } from "lucide-react";
 import {
   Card,

@@ -59,8 +59,8 @@ export async function sendEmailNotification(
   body: string
 ) {
   await dbConnect();
-  const user = await User.findById(userId);
-  if (!user || !user.notifications?.emailNotifications) {
+  const user = await User.findById(userId).select("notifications").maxTimeMS(10_000).lean();
+  if (!user || !(user as unknown as { notifications?: { emailNotifications?: boolean } }).notifications?.emailNotifications) {
     console.log(`[Email Bypassed] Notifications disabled for user: ${toEmail}`);
     return;
   }
@@ -123,15 +123,20 @@ export async function getComments(entityId: string) {
     entityId: new mongoose.Types.ObjectId(entityId),
   })
     .sort({ createdAt: 1 })
+    .maxTimeMS(10_000)
     .lean();
 }
 
 /** Fetch administrative audit logs (Admin only) */
 export async function getAuditLogs(userId: string) {
   await dbConnect();
-  const user = await User.findById(userId);
-  if (!user || user.role !== "admin") {
+  const user = await User.findById(userId).select("role").maxTimeMS(10_000).lean();
+  if (!user || (user as unknown as { role?: string }).role !== "admin") {
     throw new Error("UNAUTHORIZED");
   }
-  return await AuditLog.find({}).sort({ createdAt: -1 }).limit(100).lean();
+  return await AuditLog.find({})
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .maxTimeMS(10_000)
+    .lean();
 }
