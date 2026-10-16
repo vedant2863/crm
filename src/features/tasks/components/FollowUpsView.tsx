@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTasks } from "../hooks/useTasks";
-import { Task } from "../types/task";
+import type { Task } from "../types/task";
 import { TaskDialog } from "./TaskDialog";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -27,9 +27,7 @@ import {
   LoadingSkeleton,
   AuthRequired,
   ErrorState,
-  EmptyState,
   ConfirmDialog,
-  StatusBadge,
   PriorityBadge,
 } from "@/components/common";
 

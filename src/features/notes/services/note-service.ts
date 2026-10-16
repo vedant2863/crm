@@ -2,7 +2,7 @@
 import dbConnect from "@/lib/dbConnect";
 import Note, { INote } from "@/models/note";
 import "@/models/deal";
-import mongoose, { FilterQuery } from "mongoose";
+import mongoose from "mongoose";
 
 interface GetNotesParams {
   userId: string;
@@ -13,7 +13,7 @@ interface GetNotesParams {
 export async function getNotes({ userId, search, dealId }: GetNotesParams) {
   await dbConnect();
 
-  const query: FilterQuery<INote> = { userId };
+  const query: Record<string, any> = { userId };
 
   if (dealId) {
     query.dealId = new mongoose.Types.ObjectId(dealId);

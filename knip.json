@@ -26,6 +26,7 @@
     "dependencies": "error",
     "devDependencies": "warn",
     "exports": "off",
-    "types": "off"
+    "types": "off",
+    "duplicates": "off"
   }
 }

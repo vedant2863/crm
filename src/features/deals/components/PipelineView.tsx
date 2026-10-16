@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDeals } from "../hooks/useDeals";
-import { Deal } from "../types/deal";
+import type { Deal } from "../types/deal";
 import { DEAL_STAGES } from "../constants/deatstage";
 import PipelineBoard from "./PipelineBoard";
 import { DealDialog } from "./DealDialog";
-import { CreateDealRequest } from "../services/deal-client-service";
+import type { CreateDealRequest } from "../services/deal-client-service";
 import toast from "react-hot-toast";
 import { useSession } from "@/lib/auth/auth-client";
 import { cn } from "@/lib/utils";
@@ -141,6 +141,7 @@ export function PipelineView() {
           stages={DEAL_STAGES}
           deals={deals}
           onEdit={handleOpenDialog}
+          onMoveStage={handleMoveStage}
         />
       ) : (
         <div className="bg-card border rounded-3xl overflow-hidden shadow-sm">

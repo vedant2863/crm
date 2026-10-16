@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
 import { useSession } from "@/lib/auth/auth-client";

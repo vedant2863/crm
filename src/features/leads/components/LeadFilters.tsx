@@ -18,8 +18,8 @@ interface LeadFiltersProps {
   setSelectedStage: (stage: string) => void;
   selectedIds: string[];
   handleBulkDelete: () => void;
-  sortedLeadsLength: number;
-  totalLeads: number;
+  sortedLeadsLength?: number;
+  totalLeads?: number;
   rawDeals: any[];
   DEAL_STAGES: { key: string; label: string; color: string }[];
   PRIORITIES: string[];
@@ -39,8 +39,6 @@ export function LeadFilters({
   setSelectedStage,
   selectedIds,
   handleBulkDelete,
-  sortedLeadsLength,
-  totalLeads,
   rawDeals,
   DEAL_STAGES,
   PRIORITIES,

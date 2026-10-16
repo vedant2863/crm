@@ -4,7 +4,6 @@ import { memo } from "react";
 import { Deal } from "../types/deal";
 import { Building, Calendar, TrendingUp, Edit, Trash2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/common";
 
 interface DealItemProps {

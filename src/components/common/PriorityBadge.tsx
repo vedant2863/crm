@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Flag } from "lucide-react";
 
 export interface PriorityBadgeProps {
-  priority: "low" | "medium" | "high" | "urgent" | string;
+  priority?: "low" | "medium" | "high" | "urgent" | string | null;
   showIcon?: boolean;
   className?: string;
 }

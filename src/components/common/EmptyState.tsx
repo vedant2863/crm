@@ -51,18 +51,25 @@ export function EmptyState({
       {action && (
         <div>
           {isActionObject ? (
-            <Button
-              onClick={(action as any).onClick}
-              className="gap-2 shadow-sm font-semibold"
-            >
-              {(action as any).icon &&
-                React.createElement((action as any).icon, {
-                  className: "h-4 w-4",
-                })}
-              {(action as any).label}
-            </Button>
+            (() => {
+              const actionObj = action as {
+                label: string;
+                onClick: () => void;
+                icon?: LucideIcon;
+              };
+              const ActionIcon = actionObj.icon;
+              return (
+                <Button
+                  onClick={actionObj.onClick}
+                  className="gap-2 shadow-sm font-semibold"
+                >
+                  {ActionIcon && <ActionIcon className="h-4 w-4" />}
+                  {actionObj.label}
+                </Button>
+              );
+            })()
           ) : (
-            (action as React.ReactNode)
+            (action as ReactNode)
           )}
         </div>
       )}

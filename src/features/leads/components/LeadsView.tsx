@@ -12,10 +12,10 @@ import {
   Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDeals, Deal } from "@/features/deals";
+import { useDeals, type Deal } from "@/features/deals";
 import { DEAL_STAGES } from "@/features/deals/constants/deatstage";
 import { DealDialog } from "@/features/deals/components/DealDialog";
-import { CreateDealRequest } from "@/features/deals/services/deal-client-service";
+import type { CreateDealRequest } from "@/features/deals/services/deal-client-service";
 import toast from "react-hot-toast";
 import { useSession } from "@/lib/auth/auth-client";
 import {

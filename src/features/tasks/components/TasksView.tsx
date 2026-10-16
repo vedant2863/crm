@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Plus, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTasks } from "../hooks/useTasks";
-import { Task } from "../types/task";
+import type { Task } from "../types/task";
 import { TaskStats } from "./TaskStats";
 import { TaskFilters } from "./TaskFilters";
 import { TaskItem } from "./TaskItem";
 import { TaskDialog } from "./TaskDialog";
 import { TaskBoard } from "./TaskBoard";
-import { CreateTaskRequest } from "../services/task-client-service";
+import type { CreateTaskRequest } from "../services/task-client-service";
 import toast from "react-hot-toast";
 import { useSession } from "@/lib/auth/auth-client";
 import {

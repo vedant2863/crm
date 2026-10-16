@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
-import { Table, LayoutGrid, List, Kanban, LucideIcon } from "lucide-react";
+import { Table, LayoutGrid, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

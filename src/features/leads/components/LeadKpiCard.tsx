@@ -1,23 +1,25 @@
 "use client";
 
-import React from "react";
+import type { ComponentType } from "react";
+import type { LucideIcon } from "lucide-react";
 import { MetricCard } from "@/components/common";
 
 interface LeadKpiCardProps {
   label: string;
   value: string | number;
   subtitle: string;
-  icon: React.ElementType;
-  accent?: any;
+  icon: LucideIcon | ComponentType<{ className?: string }>;
+  accent?: "default" | "primary" | "emerald" | "amber" | "rose" | "blue" | "purple";
 }
 
-export function LeadKpiCard({ label, value, subtitle, icon: Icon, accent }: LeadKpiCardProps) {
+export function LeadKpiCard({ label, value, subtitle, icon, accent }: LeadKpiCardProps) {
   return (
     <MetricCard
       label={label}
       value={value}
       subtitle={subtitle}
-      icon={Icon}
+      icon={icon}
+      accent={accent}
     />
   );
 }

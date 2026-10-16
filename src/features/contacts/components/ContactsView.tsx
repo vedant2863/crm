@@ -15,7 +15,7 @@ import EditContactForm from "./EditContactForm";
 import ContactList from "./ContactList";
 import Pagination from "@/components/Pagination";
 import { useContacts } from "../hooks/useContacts";
-import { ModalState, Contact } from "../types/type";
+import type { ModalState } from "../types/type";
 import { usePaginated } from "@/hooks/usePaginated";
 import { useSession } from "@/lib/auth/auth-client";
 import {
