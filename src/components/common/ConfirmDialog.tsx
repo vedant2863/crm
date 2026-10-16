@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,7 @@ export function ConfirmDialog({
   onConfirm,
   loading = false,
 }: ConfirmDialogProps) {
-  const [internalLoading, setInternalLoading] = React.useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
 
   const handleConfirm = async () => {
     try {
