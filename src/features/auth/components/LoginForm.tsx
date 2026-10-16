@@ -14,12 +14,13 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { Loader2, Mail, Lock, Sparkles, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { loginUser } from "@/lib/auth/session";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -44,28 +45,6 @@ export default function LoginForm() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError("");
-    const demoEmail = "vedantjadhav880@gmail.com";
-    const demoPassword = "vedantjadhav880";
-
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-
-    try {
-      const result = await loginUser({ email: demoEmail, password: demoPassword });
-      if (result?.error) {
-        setError("Invalid email or password");
-      } else {
-        router.push("/dashboard");
-      }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <Card className="w-full max-w-md mx-auto bg-card/60 backdrop-blur-xl border border-border/40 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-primary/20">
@@ -111,14 +90,27 @@ export default function LoginForm() {
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 bg-background/40 border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-300 rounded-xl"
+                className="pl-10 pr-10 bg-background/40 border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-300 rounded-xl"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors p-1"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -139,36 +131,6 @@ export default function LoginForm() {
             )}
           </Button>
         </form>
-
-        {/* Dynamic Demo Credentials Block with instant autofill + submit */}
-        <div className="p-5 rounded-2xl bg-primary/[0.03] border border-primary/15 relative overflow-hidden backdrop-blur-md">
-          <div className="flex items-center justify-between mb-3.5">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                Demo Environment
-              </span>
-            </div>
-            <span className="text-[9px] bg-primary/10 text-primary border border-primary/25 rounded-full px-2 py-0.5 font-bold">
-              Ready
-            </span>
-          </div>
-
-          <p className="text-xs text-muted-foreground/85 mb-4 leading-normal">
-            No registration needed. Press the quick login button below to instantly populate fields and sign in.
-          </p>
-
-          <Button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            variant="outline"
-            className="w-full bg-background/50 border-primary/20 hover:border-primary/40 hover:bg-primary/5 text-xs font-semibold py-5 rounded-xl flex items-center justify-center gap-2 group transition-all duration-300"
-          >
-            One-Click Demo Login
-            <ArrowRight className="h-3.5 w-3.5 text-primary transition-transform group-hover:translate-x-1" />
-          </Button>
-        </div>
       </CardContent>
 
       <CardFooter className="justify-center pb-6 border-t border-border/10 pt-4 relative z-10 bg-muted/10">
