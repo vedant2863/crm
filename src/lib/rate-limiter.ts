@@ -100,8 +100,48 @@ export const apiRateLimiter = new SlidingWindowRateLimiter({
   maxRequests: 120,
 });
 
-/** Account lockout tracker: 5 failed login attempts = 15 min lockout */
-export const loginAttemptTracker = new SlidingWindowRateLimiter({
-  windowSeconds: 900, // 15 minutes
-  maxRequests: 5,
+export class LoginAttemptTracker {
+  private failures = new Map<string, { timestamps: number[] }>();
+  private readonly maxFailures: number;
+  private readonly lockoutMs: number;
+
+  constructor(options: { maxFailures?: number; lockoutMinutes?: number } = {}) {
+    this.maxFailures = options.maxFailures ?? 5;
+    this.lockoutMs = (options.lockoutMinutes ?? 15) * 60 * 1000;
+  }
+
+  isLocked(key: string): { locked: boolean; retryAfterSeconds?: number } {
+    const now = Date.now();
+    const entry = this.failures.get(key);
+    if (!entry) return { locked: false };
+
+    entry.timestamps = entry.timestamps.filter((t) => now - t < this.lockoutMs);
+    if (entry.timestamps.length >= this.maxFailures) {
+      const oldest = entry.timestamps[0];
+      const retryAfterSeconds = Math.ceil((oldest + this.lockoutMs - now) / 1000);
+      return { locked: true, retryAfterSeconds: Math.max(1, retryAfterSeconds) };
+    }
+    return { locked: false };
+  }
+
+  recordFailure(key: string): void {
+    const now = Date.now();
+    let entry = this.failures.get(key);
+    if (!entry) {
+      entry = { timestamps: [] };
+      this.failures.set(key, entry);
+    }
+    entry.timestamps = entry.timestamps.filter((t) => now - t < this.lockoutMs);
+    entry.timestamps.push(now);
+  }
+
+  reset(key: string): void {
+    this.failures.delete(key);
+  }
+}
+
+/** Account lockout tracker: 5 failed attempts = 15 min lockout */
+export const loginAttemptTracker = new LoginAttemptTracker({
+  maxFailures: 5,
+  lockoutMinutes: 15,
 });

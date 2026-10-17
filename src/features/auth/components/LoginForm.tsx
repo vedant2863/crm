@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +22,6 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,13 +32,21 @@ export default function LoginForm() {
       const result = await loginUser({ email, password });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : result.error
+        );
+        setLoading(false);
+      } else if (result?.ok) {
+        // Full page navigation ensures session cookies are transmitted cleanly to the server
+        window.location.href = result.url || "/dashboard";
       } else {
-        router.push("/dashboard");
+        setError("Invalid email or password");
+        setLoading(false);
       }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred");
       setLoading(false);
     }
   };

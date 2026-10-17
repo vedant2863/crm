@@ -3,10 +3,6 @@ import { getToken } from "next-auth/jwt";
 import envConfig from "@/lib/config/envconfig";
 import { authRateLimiter, apiRateLimiter } from "@/lib/rate-limiter";
 
-/**
- * Paths that are always accessible without a session.
- */
-const PUBLIC_PATHS = ["/", "/login", "/register"];
 
 /**
  * Path prefixes that bypass middleware/proxy entirely.
@@ -70,25 +66,43 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Allow explicitly listed public pages
-  if (PUBLIC_PATHS.includes(pathname)) {
+  // 3. Allow landing page
+  if (pathname === "/") {
     return NextResponse.next();
   }
 
-  // 4. Retrieve NextAuth session token
-  const token = await getToken({
-    req: request,
-    secret: envConfig.auth.secret,
-  });
+  // 4. Retrieve NextAuth session token (checks both secure and non-secure cookie conventions)
+  const token =
+    (await getToken({
+      req: request,
+      secret: envConfig.auth.secret,
+      cookieName: "__Secure-next-auth.session-token",
+      secureCookie: true,
+    })) ||
+    (await getToken({
+      req: request,
+      secret: envConfig.auth.secret,
+      cookieName: "next-auth.session-token",
+      secureCookie: false,
+    })) ||
+    (await getToken({
+      req: request,
+      secret: envConfig.auth.secret,
+    }));
 
-  // 5. Redirect unauthenticated users to /login
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // 5. If already authenticated and visiting /login or /register -> redirect to /dashboard
+  if (token && (pathname === "/login" || pathname === "/register")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // 6. Redirect authenticated users visiting /login or /register to /dashboard
+  // 6. Allow unauthenticated access to /login and /register
   if (pathname === "/login" || pathname === "/register") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.next();
+  }
+
+  // 7. Redirect unauthenticated users visiting protected routes to /login
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // 7. Rate limit API endpoints for authenticated users (per user ID)

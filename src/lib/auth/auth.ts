@@ -6,6 +6,13 @@ import { NextAuthOptions, getServerSession as nextAuthGetServerSession } from "n
 import envConfig from "@/lib/config/envconfig";
 import { loginAttemptTracker } from "@/lib/rate-limiter";
 
+if (!process.env.NEXTAUTH_URL && process.env.RENDER_EXTERNAL_URL) {
+  process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL;
+}
+if (!process.env.AUTH_TRUST_HOST) {
+  process.env.AUTH_TRUST_HOST = "true";
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -21,23 +28,57 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase().trim();
 
-        // Account lockout: 5 failed attempts = 15 min lockout
-        const lockoutCheck = loginAttemptTracker.check(`login:${email}`);
-        if (!lockoutCheck.allowed) {
+        // 1. Account lockout check (does NOT increment failure counter)
+        const lockoutCheck = loginAttemptTracker.isLocked(`login:${email}`);
+        if (lockoutCheck.locked) {
+          console.warn(`[Auth] Account locked: ${email} (retry in ${lockoutCheck.retryAfterSeconds}s)`);
           throw new Error(
             `Account temporarily locked. Try again in ${lockoutCheck.retryAfterSeconds} seconds.`
           );
         }
 
-        await dbConnect();
-        const user = await User.findOne({ email });
-        if (!user) {
-          throw new Error("No user found with this email");
+        // 2. Connect to database
+        try {
+          await dbConnect();
+        } catch (dbErr) {
+          console.error("[Auth] Database connection error during login:", dbErr);
+          throw new Error("Database connection unavailable. Please verify MONGODB_URI.");
         }
+
+        // 3. Find user or auto-seed if fresh deployment
+        let user = await User.findOne({ email });
+        if (!user) {
+          try {
+            const count = await User.countDocuments();
+            if (count === 0) {
+              console.log("[Auth] Fresh database with 0 users detected. Auto-seeding initial data...");
+              const { seedDatabase } = await import("@/lib/seedData");
+              await seedDatabase();
+              user = await User.findOne({ email });
+            }
+          } catch (seedErr) {
+            console.error("[Auth] Auto-seeding failed:", seedErr);
+          }
+        }
+
+        if (!user) {
+          loginAttemptTracker.recordFailure(`login:${email}`);
+          console.warn(`[Auth] Login rejected: No user found for '${email}'`);
+          throw new Error("Invalid email or password");
+        }
+
+        // 4. Validate password
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) {
-          throw new Error("Invalid password");
+          loginAttemptTracker.recordFailure(`login:${email}`);
+          console.warn(`[Auth] Login rejected: Incorrect password for '${email}'`);
+          throw new Error("Invalid email or password");
         }
+
+        // 5. Successful authentication
+        loginAttemptTracker.reset(`login:${email}`);
+        console.log(`[Auth] Login successful for: ${email}`);
+
         return {
           id: user._id.toString(),
           name: user.name,
@@ -74,19 +115,6 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 8 * 60 * 60, // 8 hours
   },
-  cookies: envConfig.app.isProd
-    ? {
-        sessionToken: {
-          name: "__Secure-next-auth.session-token",
-          options: {
-            httpOnly: true,
-            sameSite: "lax",
-            path: "/",
-            secure: true,
-          },
-        },
-      }
-    : undefined,
   secret: envConfig.auth.secret,
 };
 

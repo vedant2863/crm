@@ -3,14 +3,27 @@
  * @description Centralized environment configuration.
  */
 
+if (!process.env.NEXTAUTH_URL && process.env.RENDER_EXTERNAL_URL) {
+  process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL;
+}
+if (!process.env.AUTH_TRUST_HOST) {
+  process.env.AUTH_TRUST_HOST = "true";
+}
+
 const envConfig = {
   db: {
     uri: process.env.MONGODB_URI ?? "",
   },
 
   auth: {
-    url: process.env.NEXTAUTH_URL ?? "http://localhost:3000",
-    secret: process.env.NEXTAUTH_SECRET ?? "",
+    url:
+      process.env.NEXTAUTH_URL ??
+      process.env.RENDER_EXTERNAL_URL ??
+      "http://localhost:3000",
+    secret:
+      process.env.NEXTAUTH_SECRET ||
+      process.env.AUTH_SECRET ||
+      "crm-os-production-jwt-fallback-secret-2026",
   },
 
   ai: {
